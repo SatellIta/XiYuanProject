@@ -1,16 +1,16 @@
-using System.Collections;
+锘縰sing System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class DoorController : MonoBehaviour
 {
-    public float openDistance = 2.5f;   // 向上开多高
+    public float openDistance = 2.5f;   // 鍚戜笂寮�澶氶珮
     public float openSpeed = 2f;
     Vector3 closedPos;
     void Start() => closedPos = transform.position;
     public void Open()
     {
-        StopAllCoroutines();                // 避免重复点击
+        StopAllCoroutines();                // 閬垮厤閲嶅鐐瑰嚮
         StartCoroutine(OpenRoutine());
     }
     System.Collections.IEnumerator OpenRoutine()

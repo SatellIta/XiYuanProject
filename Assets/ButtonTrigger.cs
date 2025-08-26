@@ -1,4 +1,4 @@
-using System.Collections;
+锘縰sing System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -10,7 +10,7 @@ public class ButtonTriggler : MonoBehaviour
         if (other.CompareTag("Player"))
         {
             door.Open();
-            NarratorManager.Instance.Say("欢迎来到心理状况改善");
+            NarratorManager.Instance.Say("娆㈣繋鏉ュ埌蹇冪悊鐘跺喌鏀瑰杽");
         }
     }
 }
