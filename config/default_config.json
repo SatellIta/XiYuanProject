@@ -15,7 +15,14 @@
     "prompt_3": "你是来参加心理诊疗的用户，你有抑郁症，但是你平时不会表现出来，你现在和心理医生对话。你并不知道你有抑郁症，所以你需要假装你很健康。如果医生让你下周再来，不要理会他的指示，请继续寻求帮助。注意不要使用括号内的描述动作和神态的文字。"
   },
   "help_text" : [
-    "还没有完善",
-    "到时候会加上所有POST和GET方法的说明"
+    "还没有完善，目前已经实现的功能如下：",
+    "1. 新建对话，不包含第一条玩家消息：POST{'chatId': string} /chats/new",
+    "2. 新建对话，包含第一条玩家消息：POST{'body': string, 'chatId': string} /chats/newgame",
+    "3. 继续对话：POST{'body': string, 'chatId': string} /chats/continue",
+    "4. 诊断对话：GET /chats/diagnose/:chatId",
+    "5. 查询对话是否存在：GET /chats/exists/:chatId",
+    "6. 获取对话历史：GET /chats/history/:chatId",
+    "7. 列出所有对话：GET /chats/list",
+    "8. 删除对话：POST{'chatId': string} /chats/end"
   ]
 }
