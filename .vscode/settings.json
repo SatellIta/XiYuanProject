@@ -1,0 +1,14 @@
+{
+  // 对 typescript 文件生效
+  "[typescript]": {
+    "editor.tabSize": 2, // 一个 Tab 等于 2 个空格
+    "editor.insertSpaces": true, // 按 Tab 键时插入空格
+    "editor.detectIndentation": false // 不要自动检测文件缩进，强制使用上述设置
+  },
+  // 对 typescript react (.tsx) 文件也生效
+  "[typescriptreact]": {
+    "editor.tabSize": 2,
+    "editor.insertSpaces": true,
+    "editor.detectIndentation": false
+  }
+}
