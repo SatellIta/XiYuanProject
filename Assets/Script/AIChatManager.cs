@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using TMPro;
@@ -26,7 +27,7 @@ public class AIChatManager : MonoBehaviour
     // ① 被触发器调用：新建对话 + 拿 AI 第一句
     public void StartNewChat()
     {
-        chatId = System.Guid.NewGuid().ToString();
+        chatId = chatId = DateTime.UtcNow.ToString("yyyy-MM-dd-HH:mm"); ;
         StartCoroutine(PostNewChat());
     }
 
