@@ -1,12 +1,12 @@
-using System.Collections;
+ï»¿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class BreathLight : MonoBehaviour
 {
     [SerializeField] Light targetLight;
-    [Range(0.1f, 3f)] public float breathSpeed = 0.2f;  // ºôÎüÆµÂÊ
-    [Range(0.02f, 0.2f)] public float breathAmount = 0.15f; // ÁÁ¶È±ä»¯·ù¶È
+    [Range(0.1f, 3f)] public float breathSpeed = 0.2f;  // å‘¼å¸é¢‘ç‡
+    [Range(0.02f, 0.2f)] public float breathAmount = 0.15f; // äº®åº¦å˜åŒ–å¹…åº¦
 
     private float baseIntensity;
 

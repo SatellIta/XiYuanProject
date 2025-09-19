@@ -1,4 +1,4 @@
-using System;
+ï»¿using System;
 using System.Collections;
 using System.Collections.Generic;
 using TMPro;
@@ -19,12 +19,12 @@ public class AIChatManager : MonoBehaviour
     private readonly string server = "http://1.117.207.132";
 
     [Header("Config")]
-    [SerializeField] private float typingSpeed = 0.04f; // ×ÖÄ»Öğ×Ö¼ä¸ô
+    [SerializeField] private float typingSpeed = 0.04f; // å­—å¹•é€å­—é—´éš”
 
     private string chatId;
     private bool isTyping = false;
 
-    // ¢Ù ±»´¥·¢Æ÷µ÷ÓÃ£ºĞÂ½¨¶Ô»° + ÄÃ AI µÚÒ»¾ä
+    // â‘  è¢«è§¦å‘å™¨è°ƒç”¨ï¼šæ–°å»ºå¯¹è¯ + æ‹¿ AI ç¬¬ä¸€å¥
     public void StartNewChat()
     {
         chatId = chatId = DateTime.UtcNow.ToString("yyyy-MM-dd-HH:mm"); ;
@@ -35,7 +35,7 @@ public class AIChatManager : MonoBehaviour
     {
         waitingForReply = true;
         hintText.SetActive(true);
-        hintText.GetComponent<TextMeshProUGUI>().text = "°´ F ¿ªÊ¼»Ø¸´";
+        hintText.GetComponent<TextMeshProUGUI>().text = "æŒ‰ F å¼€å§‹å›å¤";
     }
 
     private IEnumerator PostNewChat()
@@ -57,11 +57,11 @@ public class AIChatManager : MonoBehaviour
         }
         else
         {
-            Debug.LogError("ĞÂ½¨¶Ô»°Ê§°Ü: " + req.error);
+            Debug.LogError("æ–°å»ºå¯¹è¯å¤±è´¥: " + req.error);
         }
     }
 
-    // ¢Ú Íæ¼Ò°´»Ø³µ ¡ú ¼ÌĞø¶Ô»°
+    // â‘¡ ç©å®¶æŒ‰å›è½¦ â†’ ç»§ç»­å¯¹è¯
     public void OnPlayerSubmit()
     {
         if (isTyping || string.IsNullOrWhiteSpace(inputField.text)) return;
@@ -71,8 +71,8 @@ public class AIChatManager : MonoBehaviour
         inputField.caretPosition = 0;
         inputField.selectionAnchorPosition = 0;
         inputField.selectionFocusPosition = 0;
-        inputField.text = "";                // Çå¿Õ
-        inputField.interactable = false;     // µÈ´ıÆÚ¼ä½ûÓÃ
+        inputField.text = "";                // æ¸…ç©º
+        inputField.interactable = false;     // ç­‰å¾…æœŸé—´ç¦ç”¨
 
         StartCoroutine(PostContinue(playerText));
     }
@@ -96,11 +96,11 @@ public class AIChatManager : MonoBehaviour
         }
         else
         {
-            Debug.LogError("¼ÌĞø¶Ô»°Ê§°Ü: " + req.error);
+            Debug.LogError("ç»§ç»­å¯¹è¯å¤±è´¥: " + req.error);
         }
     }
 
-    // ¢Û Öğ×ÖÏÔÊ¾×ÖÄ»
+    // â‘¢ é€å­—æ˜¾ç¤ºå­—å¹•
     private IEnumerator TypeSubtitle(string fullText, System.Action onDone)
     {
         isTyping = true;
@@ -118,29 +118,29 @@ public class AIChatManager : MonoBehaviour
     {
         inputField.gameObject.SetActive(true);
         inputField.interactable = true;
-        inputField.text = "";          // ÔÙ±£ÏÕÇå¿ÕÒ»´Î
-        inputField.ForceLabelUpdate(); // Ç¿ÖÆË¢ĞÂÕ¼Î»·û
-        inputField.ActivateInputField(); // ×Ô¶¯¾Û½¹
+        inputField.text = "";          // å†ä¿é™©æ¸…ç©ºä¸€æ¬¡
+        inputField.ForceLabelUpdate(); // å¼ºåˆ¶åˆ·æ–°å ä½ç¬¦
+        inputField.ActivateInputField(); // è‡ªåŠ¨èšç„¦
     }
 
     public void Update()
     {
-        // ¼ì²â ESC ±»°´ÏÂ
+        // æ£€æµ‹ ESC è¢«æŒ‰ä¸‹
         if (Input.GetKeyDown(KeyCode.Escape))
             wasEscPressed = true;
 
-        // Èç¹û ESC ºóµÚÒ»´ÎµãÊó±ê×ó¼ü£¬ÇÒÊäÈë¿òÒÑÏÔÊ¾£¬¾ÍÇ¿ÖÆ¾Û½¹
+        // å¦‚æœ ESC åç¬¬ä¸€æ¬¡ç‚¹é¼ æ ‡å·¦é”®ï¼Œä¸”è¾“å…¥æ¡†å·²æ˜¾ç¤ºï¼Œå°±å¼ºåˆ¶èšç„¦
         if (wasEscPressed && Input.GetMouseButtonDown(0) && inputField.gameObject.activeSelf)
         {
-            wasEscPressed = false;          // Ö»Ö´ĞĞÒ»´Î
-            inputField.ActivateInputField(); // Á¢¼´¾Û½¹²¢µ¯³ö¼üÅÌ
+            wasEscPressed = false;          // åªæ‰§è¡Œä¸€æ¬¡
+            inputField.ActivateInputField(); // ç«‹å³èšç„¦å¹¶å¼¹å‡ºé”®ç›˜
         }
 
         if (waitingForReply && Input.GetKeyDown(KeyCode.F))
         {
             waitingForReply = false;
-            hintText.SetActive(false);     // Òş²ØÌáÊ¾
-            EnableInput();                 // ´ò¿ªÊäÈë¿ò + ¾Û½¹
+            hintText.SetActive(false);     // éšè—æç¤º
+            EnableInput();                 // æ‰“å¼€è¾“å…¥æ¡† + èšç„¦
         }
 
     }
