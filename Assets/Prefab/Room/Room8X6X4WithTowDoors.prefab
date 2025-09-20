@@ -1297,7 +1297,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1842191124755146869}
   m_Layer: 0
-  m_Name: RoomWithTwoDoors8X6X4
+  m_Name: Room8X6X4WithTowDoors
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
