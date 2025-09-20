@@ -14,9 +14,9 @@ public class MouseLook : MonoBehaviour
 
     void Update()
     {
-        // 获取鼠标输入
-        float mouseX = Input.GetAxis("Mouse X") * mouseSensitivity * Time.deltaTime;
-        float mouseY = Input.GetAxis("Mouse Y") * mouseSensitivity * Time.deltaTime;
+        // 获取鼠标输入，使用固定时间频率以确保平滑
+        float mouseX = Input.GetAxis("Mouse X") * mouseSensitivity * Time.fixedDeltaTime;
+        float mouseY = Input.GetAxis("Mouse Y") * mouseSensitivity * Time.fixedDeltaTime;
 
         // 计算垂直旋转角度并限制范围
         xRotation -= mouseY;

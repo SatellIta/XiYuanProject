@@ -100,3 +100,6 @@ InitTestScene*.unity*
 
 # local VSCode settings
 .vscode/
+
+# imports assets
+.imports/
