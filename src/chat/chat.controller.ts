@@ -84,6 +84,14 @@ export class ChatController {
     return history;
   }
 
+  // 和列出所有对话的GET方法一样
+  @Get('history')
+  async getHistory(): Promise<string[]> {
+    const response = await this.chatsService.listChats();
+
+    return response;
+  }
+
     // 以下是用于调试的接口
     // 用于接收测试请求的POST方法
   @Post('test')
