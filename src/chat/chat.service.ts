@@ -72,7 +72,8 @@ export class ChatService {
   }
 
   // 诊断一个已有的对话, 需要指定对话ID和系统提示词, 返回AI的回复
-  async diagnoseChat(chatId: string, systemPrompt: string): Promise<string> {
+  // 如果找不到聊天记录，则返回null
+  async diagnoseChat(chatId: string, systemPrompt: string): Promise<string | null>{
     if (await this.historyService.chatExists(chatId)) {
       const history = await this.historyService.getChatHistory(chatId);
       // 构建系统消息
@@ -86,7 +87,7 @@ export class ChatService {
       return removeRole(response);
     }
 
-    return `${chatId} 对话不存在`;
+    return null;
   }
 
   // 结束一个对话
@@ -102,19 +103,19 @@ export class ChatService {
   }
 
   // 查询对话的聊天记录
-  async getChatHistory(chatId: string): Promise<Chat[] | string>  {
+  async getChatHistory(chatId: string): Promise<Chat[] | null>  {
     if (await this.historyService.chatExists(chatId)) {
       return this.historyService.getChatHistory(chatId);
     }
   
-    return `${chatId} 对话不存在`;
+    return null;
   }
 
   // 测试聊天功能，接收聊天轮数并返回Ai间的聊天记录
   async testChat( length: number ) : Promise<Chat[]> {
     // 分别获取用户和医生的提示词
     const userPrompt = get('user_prompt.prompt_3');
-    const doctorPrompt = get('system_prompt.prompt_1');
+    const doctorPrompt = get('system_prompt.prompt_default');
     // 医生先说话
     let doctorMessage: string = await this.newChatOnlySystem('test_chat_doctor', doctorPrompt);
     let userMessage: string = await this.newChat('test_chat_user', userPrompt, doctorMessage);
@@ -134,7 +135,7 @@ export class ChatService {
     // 将聊天记录和诊断结果合并返回
     userHistory.push({
       role: 'diagnose',
-      content: diagnose,
+      content : diagnose as string,
     });
 
     return userHistory;

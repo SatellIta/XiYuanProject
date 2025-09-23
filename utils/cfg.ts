@@ -41,7 +41,7 @@ function loadConfigFile(fileName: string): any {
  * @param key 要检索的配置键（例如 'port' 或 'database.host'）。
  * @returns 配置项的值，如果在两个文件中都找不到，则返回 undefined。
  */
-export function get(key: string): any {
+export function get(key: string, defaultKey?: any): any {
   // 首次调用时加载用户配置
   if (!configLoaded) {
     config = loadConfigFile('config');
@@ -51,7 +51,7 @@ export function get(key: string): any {
   }
 
   // 使用 lodash.get 尝试从用户配置中获取值
-  const value = lodash.get(config, key);
+  let value = lodash.get(config, key);
 
   // 如果在用户配置中找到了值（即使是 null），则直接返回
   // 只有当值为 undefined (表示键不存在) 时，才继续查找默认配置
@@ -65,8 +65,16 @@ export function get(key: string): any {
     defaultConfigLoaded = true;
   }
 
-  // 从默认配置中获取值并返回
-  return lodash.get(defaultConfig, key);
+  // 尝试从默认cfg中获取值 
+  value = lodash.get(defaultConfig, key);
+  if (value !== undefined) {
+    return value;
+  }
+
+  // 如果传入了默认值参数，则返回它
+  if (defaultKey !== undefined) {
+    return defaultKey;
+  }
 }
 
 /**
@@ -104,3 +112,34 @@ export function set(key: string, value: any): void {
     throw new Error(`Error writing config file "${filePath}": ${error.message}`);
   }
 }
+
+  /**
+   * 删除一个配置项
+   * @param key 要删除的键名
+   */
+  export function remove(key: string): void {
+    if (!configLoaded) {
+      config = loadConfigFile('config') || {};
+      configLoaded = true;
+    }
+
+    // 使用 lodash.unset 删除指定键
+    lodash.unset(config, key);
+
+    // 将更新后的配置写回文件系统
+    const projectRoot = process.cwd();
+    const configDir = path.join(projectRoot, 'config');
+    const filePath = path.join(configDir, 'config.json');
+    
+    try {
+      // 确保 config 目录存在
+      if (!fs.existsSync(configDir)) {
+        fs.mkdirSync(configDir, { recursive: true });
+      }
+      // 将对象格式化为可读的 JSON 字符串并写入文件
+      const fileContent = JSON.stringify(config, null, 2);
+      fs.writeFileSync(filePath, fileContent, 'utf-8');
+    } catch (error) {
+      throw new Error(`Error writing config file "${filePath}": ${error.message}`);
+    }
+  }

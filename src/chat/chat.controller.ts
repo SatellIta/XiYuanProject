@@ -10,30 +10,36 @@ export class ChatController {
   // 默认页面展示帮助信息
   @Get()
   async help(): Promise<string[] | string> {
-    const helpText = get('help_text') as string[];
+    const helpText = get('chat_help') as string[];
     return helpText.join('\n');  // 暂时先这样
   }
 
   // 用于初始化一个新对话的POST方法
   // 客户端需要提供对话ID
+  // 客户端可以提供提示词名称，否则使用默认提示词
   @Post('new')
   async newChat( 
-    @Body('chatId') chatId: string, 
+    @Body('chatId') chatId: string,
+    @Body('systemPromptName') systemPromptName: string,
   ): Promise<string> {
-    const systemPromt = get('system_prompt.prompt_1');
-    const response = await this.chatsService.newChatOnlySystem(chatId, systemPromt);
+    if (!systemPromptName) systemPromptName = 'prompt_default';
+    const systemPromt = get(`system_prompt.${systemPromptName}`);
+    const response = await this.chatsService.newChatOnlySystem(chatId, systemPromt); 
 
     return response;
   }
 
   // 用于连接游戏，系统给出第一条消息
   // 客户端需要提供对话ID，第一条用户消息
+  // 客户端可以指定提示词名称，否则使用默认提示词
   @Post('newgame')
   async newGameChat(
     @Body('chatId') chatId: string,
     @Body('body') message: string,
+    @Body('systemPromptName') systemPromptName: string,
   ): Promise<string> {
-    const systemPromt = get('system_prompt.prompt_1');
+    if (!systemPromptName) systemPromptName = 'prompt_default';
+    const systemPromt = get(`system_prompt.${systemPromptName}`);
     const response = await this.chatsService.newChat(chatId, systemPromt, message);
 
     return response;
@@ -59,7 +65,11 @@ export class ChatController {
     const systemPrompt = get('system_prompt.prompt_2');
     const response = await this.chatsService.diagnoseChat(chatId, systemPrompt);
 
-    // 如果对话不存在，response将是提示不存在的字符串
+    // 如果对话不存在，response将是null
+    if (response === null) {
+      return `${chatId} 对话不存在！`;
+    }
+
     return response;
   }
 
@@ -80,7 +90,11 @@ export class ChatController {
   ): Promise<Chat[] | string> {
     const history = await this.chatsService.getChatHistory(chatId);
 
-    // 如果对话不存在，history将是提示不存在的字符串
+    // 如果对话不存在，history将是null
+    if (history === null) {
+      return `${chatId} 对话不存在！`;
+    }
+
     return history;
   }
 
