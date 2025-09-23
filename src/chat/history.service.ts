@@ -2,6 +2,9 @@ import { Injectable, Inject } from '@nestjs/common';
 import { Chat } from 'interfaces/chat';
 import { REDIS_CLIENT } from 'src/redis/redis.module';
 import { Redis } from 'ioredis';
+import { get } from 'utils/cfg';
+
+const EXPIRE_TIME = get('history_expire_time') || 3 * 24 * 60 * 60; // 默认三天
 
 @Injectable()
 export class HistoryService {
@@ -21,8 +24,8 @@ export class HistoryService {
     messages.forEach((message) => {
       pipeline.rpush(key, JSON.stringify(message));
     });
-    // 设置过期时间, 这里是1天
-    pipeline.expire(key, 1 * 24 * 60 * 60);
+    // 设置过期时间, 这里是3天
+    pipeline.expire(key, EXPIRE_TIME);
     await pipeline.exec();
   }
 
@@ -32,7 +35,7 @@ export class HistoryService {
     const pipeline = this.redisClient.pipeline();
     pipeline.rpush(key, JSON.stringify(message));
     // 每次添加消息时，重置过期时间
-    pipeline.expire(key, 1 * 24 * 60 * 60);
+    pipeline.expire(key, EXPIRE_TIME);
     await pipeline.exec();
   }
 
@@ -44,7 +47,7 @@ export class HistoryService {
       pipeline.rpush(key, JSON.stringify(message));
     });
     // 每次添加消息时，重置过期时间
-    pipeline.expire(key, 1 * 24 * 60 * 60);
+    pipeline.expire(key, EXPIRE_TIME);
     await pipeline.exec();
   }
 
