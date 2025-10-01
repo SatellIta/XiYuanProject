@@ -5,6 +5,8 @@ public class ESCMenuManager : MonoBehaviour
 {
     // 公开变量，用于在 Unity 编辑器中关联菜单面板
     public GameObject pauseMenuPanel;
+    // 导入聊天面板，以便在暂停时禁用它
+    public GameObject chatPanel;
 
     // 用于追踪游戏当前是否已暂停
     private bool isPaused = false;
@@ -34,6 +36,7 @@ public class ESCMenuManager : MonoBehaviour
     public void Resume()
     {
         pauseMenuPanel.SetActive(false); // 隐藏菜单
+        chatPanel.SetActive(true);   // 显示聊天面板
         Time.timeScale = 1f;             // 将游戏时间恢复为正常速度
         isPaused = false;
         isGamePaused = false;
@@ -45,6 +48,7 @@ public class ESCMenuManager : MonoBehaviour
     void Pause()
     {
         pauseMenuPanel.SetActive(true);  // 显示菜单
+        chatPanel.SetActive(false);  // 隐藏聊天面板
         Time.timeScale = 0f;             // 将游戏时间停止
         isPaused = true;
         isGamePaused = true;
@@ -56,6 +60,7 @@ public class ESCMenuManager : MonoBehaviour
     public void LoadMenu()
     {
         Time.timeScale = 1f; // 确保在加载新场景前恢复时间
+        chatPanel.SetActive(true);   // 显示聊天面板
         isGamePaused = false;
         isPaused = false;
         SceneManager.LoadScene("MainMenu");

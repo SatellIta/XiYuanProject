@@ -9,6 +9,7 @@ public class AIChatManager : MonoBehaviour
 {   
     private bool wasEscPressed = false;
     private bool waitingForReply = false;
+    private bool hasBeenTriggered = false;
 
     [Header("UI")]
     [SerializeField] private TextMeshProUGUI subtitle;
@@ -27,7 +28,11 @@ public class AIChatManager : MonoBehaviour
     // ① 被触发器调用：新建对话 + 拿 AI 第一句
     public void StartNewChat()
     {
-        chatId = chatId = DateTime.UtcNow.ToString("yyyy-MM-dd-HH:mm"); ;
+        // 只激活一次
+        if (hasBeenTriggered) return;
+        hasBeenTriggered = true;
+
+        chatId = DateTime.UtcNow.ToString("yyyy-MM-dd-HH:mm"); ;
         StartCoroutine(PostNewChat());
     }
 
