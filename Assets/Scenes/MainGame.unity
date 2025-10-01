@@ -588,7 +588,7 @@ Transform:
   m_GameObject: {fileID: 159785488}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -0.32, y: -0.37238932, z: -4.71}
+  m_LocalPosition: {x: -0.32, y: -0.37238932, z: -3.62}
   m_LocalScale: {x: 2.86, y: 3.7, z: 0.01}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -4106,6 +4106,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   pauseMenuPanel: {fileID: 659689831}
+  chatPanel: {fileID: 598200817}
 --- !u!4 &1398867644 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 8226370058011548335, guid: 1455a4b451368314a892d9db267ee637, type: 3}
@@ -5855,7 +5856,7 @@ Transform:
   m_GameObject: {fileID: 2009541477}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -0.33267188, y: -0.092989445, z: -4.298}
+  m_LocalPosition: {x: -0.33267188, y: -0.092989445, z: -3.57}
   m_LocalScale: {x: 3.0126154, y: 3.6398163, z: 0.0324}
   m_ConstrainProportionsScale: 0
   m_Children: []
