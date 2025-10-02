@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: 1748594766969060052}
   - component: {fileID: 3570045510001347029}
   - component: {fileID: 3553251382705552290}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: SingkeHospitalDoor
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -139,7 +139,7 @@ GameObject:
   - component: {fileID: 7279943902373638495}
   - component: {fileID: 6149940170910093565}
   - component: {fileID: 4223631878976722707}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: HospitalDoor
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -180,7 +180,6 @@ MonoBehaviour:
   closeSound: {fileID: 8300000, guid: 343e30318c2af674ead037b07980b94a, type: 3}
   lockedSound: {fileID: 8300000, guid: 5a52095020dc2884d9edbeefe287db81, type: 3}
   isLocked: 0
-  interactionDistance: 3
 --- !u!82 &4223631878976722707
 AudioSource:
   m_ObjectHideFlags: 0
@@ -289,7 +288,7 @@ GameObject:
   - component: {fileID: 2538359361597386187}
   - component: {fileID: 5286440079830859570}
   - component: {fileID: 7300988759032659026}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: SingkeHospitalDoor.frame
   m_TagString: Untagged
   m_Icon: {fileID: 0}

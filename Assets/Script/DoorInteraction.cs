@@ -1,5 +1,7 @@
 using UnityEngine;
 
+// 现在玩家触发开门的逻辑部分在PlayerInteraction脚本中处理
+// 这个脚本专注于门的具体交互行为
 [RequireComponent(typeof(AudioSource))]
 public class DoorInteraction : MonoBehaviour
 {
@@ -24,57 +26,15 @@ public class DoorInteraction : MonoBehaviour
     [Tooltip("勾选此项，玩家将无法打开这扇门。")]
     public bool isLocked = false;
 
-    [Header("交互距离设置")]
-    [Tooltip("玩家需要离门多近才能进行交互？")]
-    public float interactionDistance = 3.0f;
-    // 引用玩家对象
-    private Transform playerTransform;
-
-    void Start()
+    void Awake() // 使用 Awake 确保在其他脚本的 Start 之前获取组件
     {
-        // 检查doorAnimator是否在Inspector中被赋值
+        audioSource = GetComponent<AudioSource>();
         if (doorAnimator == null)
         {
             Debug.LogError("门的Animator未在Inspector中指定！请将门扇对象拖拽到脚本的'Door Animator'字段。", this);
-            return; // 如果没有指定，则禁用脚本以防出错
-        }
-
-        // 自动寻找场景中标签为 "Player" 的对象
-        GameObject playerObject = GameObject.FindGameObjectWithTag("Player");
-        if (playerObject != null)
-        {
-            playerTransform = playerObject.transform;
-        }
-        else
-        {
-            Debug.LogError("场景中找不到标签为 'Player' 的对象！请为你的玩家角色设置Tag。", this);
+            enabled = false; // 禁用脚本
         }
     }
-
-    void Update()
-    {
-        if (playerTransform == null || doorAnimator == null) return;
-
-        // 计算玩家与门（父对象）的距离
-        float distance = Vector3.Distance(playerTransform.position, transform.position);
-
-        if (Input.GetKeyDown(KeyCode.E) && distance <= interactionDistance)
-        {
-            if (isLocked)
-            {
-                // 播放锁定音效
-                if (lockedSound != null)
-                {
-                    audioSource.PlayOneShot(lockedSound);
-                }
-                Debug.Log("这扇门被锁住了！");
-                return;
-            }
-
-            ToggleDoor();
-        }
-    }
-
     // 开关门的核心逻辑
     public void ToggleDoor()
     {

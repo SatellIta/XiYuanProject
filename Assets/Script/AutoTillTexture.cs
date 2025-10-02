@@ -1,95 +1,137 @@
 using UnityEngine;
+#if UNITY_EDITOR
+using UnityEditor;
+using System.IO;
+#endif
 
 [ExecuteAlways]
+[RequireComponent(typeof(MeshFilter))]
+[RequireComponent(typeof(MeshRenderer))] // 【关键修正】强制要求此组件
 public class AutoTiling : MonoBehaviour
 {
-    public enum TilingAxis { XY, XZ, YZ }
+    public enum TilingAxis { XZ_Floor, XY_Wall, YZ_Wall }
 
     [Header("平铺设置")]
-    [Tooltip("选择使用哪个物体的轴向来计算平铺。")]
-    public TilingAxis axis = TilingAxis.XZ;
+    [Tooltip("选择平铺的平面类型。")]
+    public TilingAxis axis = TilingAxis.XZ_Floor;
 
-    [Tooltip("基础平铺密度。数值越大，纹理重复越多。1表示1米平铺1次。")]
+    [Tooltip("基础平铺密度。1表示1米平铺1次。")]
     public float textureDensity = 1.0f;
 
-    // 私有变量
-    private Renderer objectRenderer;
-    private Material materialInstance;
-    private Vector3 previousScale;
-
-    // OnEnable 在对象激活时调用
-    void OnEnable()
+    void OnValidate()
     {
-        // 确保只在需要时获取组件和创建实例
-        ApplyTiling();
+        #if UNITY_EDITOR
+        EditorApplication.delayCall += ApplyTiling;
+        #endif
     }
-    
-    // 在对象被禁用或销毁前调用
-    void OnDisable()
-    {
-        // 检查 materialInstance 是否是创建的副本
-        // 并且检查渲染器是否仍然使用这个实例
-        if (materialInstance != null && objectRenderer != null && objectRenderer.sharedMaterial == materialInstance)
-        {
-            // 销毁创建的实例
-            DestroyImmediate(materialInstance);
-        }
-    }
-
 
     void Update()
     {
-#if UNITY_EDITOR
-        if (!Application.isPlaying)
+        #if UNITY_EDITOR
+        if (!Application.isPlaying && transform.hasChanged)
         {
-            if (transform.lossyScale != previousScale)
-            {
-                ApplyTiling();
-                previousScale = transform.lossyScale;
-            }
+            ApplyTiling();
+            transform.hasChanged = false;
         }
-#endif
+        #endif
     }
 
-    void ApplyTiling()
+    private void ApplyTiling()
     {
-        if (objectRenderer == null)
+        if (this == null) return;
+
+        var objectRenderer = GetComponent<Renderer>();
+        var meshFilter = GetComponent<MeshFilter>();
+
+        // --- 更稳健的检查 ---
+        if (objectRenderer == null || meshFilter == null)
         {
-            objectRenderer = GetComponent<Renderer>();
+            // 由于 RequireComponent 的存在，这几乎不可能发生，但作为保险
+            return;
+        }
+        if (meshFilter.sharedMesh == null)
+        {
+            // MeshFilter 中还没有指定网格
+            return;
+        }
+        if (objectRenderer.sharedMaterial == null)
+        {
+            // Renderer 中还没有指定材质，给出友好提示
+            Debug.LogWarning($"[AutoTiling] 请为对象 '{this.gameObject.name}' 的 Mesh Renderer 指定一个材质，以激活自动平铺功能。", this);
+            return;
         }
         
-        if (objectRenderer == null || objectRenderer.sharedMaterial == null) return;
-        
-        // 如果还没有实例，或者实例丢失了（例如，撤销操作），就创建一个
-        if (materialInstance == null)
-        {
-            materialInstance = new Material(objectRenderer.sharedMaterial);
-            objectRenderer.material = materialInstance;
-        }
+        // 如果所有检查都通过，才继续执行核心逻辑
+        #if UNITY_EDITOR
+        Material materialToModify = GetOrCreateMaterialAssetForObject(objectRenderer);
+        #else
+        Material materialToModify = objectRenderer.material;
+        #endif
 
-        if (materialInstance.mainTexture == null) return;
+        if (materialToModify == null || materialToModify.mainTexture == null) return;
 
+        // --- 应用平铺计算 ---
+        Vector3 meshSize = meshFilter.sharedMesh.bounds.size;
         Vector3 worldScale = transform.lossyScale;
+        Vector3 realWorldDimensions = new Vector3(meshSize.x * worldScale.x, meshSize.y * worldScale.y, meshSize.z * worldScale.z);
         Vector2 newTiling = Vector2.one;
+        switch (axis) {
+            case TilingAxis.XZ_Floor: newTiling.x = realWorldDimensions.x; newTiling.y = realWorldDimensions.z; break;
+            case TilingAxis.XY_Wall: newTiling.x = realWorldDimensions.x; newTiling.y = realWorldDimensions.y; break;
+            case TilingAxis.YZ_Wall: newTiling.x = realWorldDimensions.z; newTiling.y = realWorldDimensions.y; break;
+        }
+        newTiling *= textureDensity;
 
-        switch (axis)
+        if (materialToModify.mainTextureScale != newTiling)
         {
-            case TilingAxis.XY:
-                newTiling.x = worldScale.x;
-                newTiling.y = worldScale.y;
-                break;
-            case TilingAxis.XZ:
-                newTiling.x = worldScale.x;
-                newTiling.y = worldScale.z;
-                break;
-            case TilingAxis.YZ:
-                newTiling.x = worldScale.y;
-                newTiling.y = worldScale.z;
-                break;
+            materialToModify.mainTextureScale = newTiling;
+            #if UNITY_EDITOR
+            if(AssetDatabase.Contains(materialToModify))
+            {
+                EditorUtility.SetDirty(materialToModify);
+            }
+            #endif
+        }
+    }
+
+#if UNITY_EDITOR
+    private Material GetOrCreateMaterialAssetForObject(Renderer objectRenderer)
+    {
+        string currentMatPath = AssetDatabase.GetAssetPath(objectRenderer.sharedMaterial);
+        if (!string.IsNullOrEmpty(currentMatPath) && currentMatPath.Contains($"_{this.gameObject.name}_AutoTiled.mat"))
+        {
+            return objectRenderer.sharedMaterial;
         }
 
-        newTiling *= textureDensity;
-        
-        materialInstance.mainTextureScale = newTiling;
+        string prefabAssetPath = PrefabUtility.GetPrefabAssetPathOfNearestInstanceRoot(this.gameObject);
+        if (string.IsNullOrEmpty(prefabAssetPath))
+        {
+            if (objectRenderer.sharedMaterial.name.EndsWith("(Instance)")) return objectRenderer.sharedMaterial;
+            return objectRenderer.material;
+        }
+
+        string prefabName = Path.GetFileNameWithoutExtension(prefabAssetPath);
+        string directory = Path.GetDirectoryName(prefabAssetPath);
+        string originalMatName = objectRenderer.sharedMaterial.name;
+        string newMatName = $"{prefabName}_{this.gameObject.name}_{originalMatName}_AutoTiled.mat";
+        foreach (char c in Path.GetInvalidFileNameChars()) { newMatName = newMatName.Replace(c, '_'); }
+        string newMatPath = Path.Combine(directory, newMatName);
+
+        Material managedMaterial = AssetDatabase.LoadAssetAtPath<Material>(newMatPath);
+
+        if (managedMaterial == null)
+        {
+            managedMaterial = new Material(objectRenderer.sharedMaterial);
+            managedMaterial.name = Path.GetFileNameWithoutExtension(newMatName);
+            AssetDatabase.CreateAsset(managedMaterial, newMatPath);
+        }
+
+        if (objectRenderer.sharedMaterial != managedMaterial)
+        {
+            objectRenderer.sharedMaterial = managedMaterial;
+            EditorUtility.SetDirty(this.gameObject);
+        }
+        return managedMaterial;
     }
+#endif
 }
