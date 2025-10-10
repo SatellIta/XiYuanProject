@@ -14,7 +14,7 @@ export class ChatController {
     return helpText.join('\n');  // 暂时先这样
   }
 
-  // 用于初始化一个新对话的POST方法
+  // 用于新建一个对话但不包含用户消息的POST方法
   // 客户端需要提供对话ID
   // 客户端可以提供提示词名称，否则使用默认提示词
   @Post('new')
@@ -23,13 +23,13 @@ export class ChatController {
     @Body('systemPromptName') systemPromptName: string,
   ): Promise<string> {
     if (!systemPromptName) systemPromptName = 'prompt_default';
-    const systemPromt = get(`system_prompt.${systemPromptName}`);
+    const systemPromt = get(`system_prompt.${systemPromptName}`, `system_prompt.prompt_default`);
     const response = await this.chatsService.newChatOnlySystem(chatId, systemPromt); 
 
     return response;
   }
 
-  // 用于连接游戏，系统给出第一条消息
+  // 用于新建一个对话，并包含第一条用户消息的POST方法
   // 客户端需要提供对话ID，第一条用户消息
   // 客户端可以指定提示词名称，否则使用默认提示词
   @Post('newgame')
@@ -39,7 +39,7 @@ export class ChatController {
     @Body('systemPromptName') systemPromptName: string,
   ): Promise<string> {
     if (!systemPromptName) systemPromptName = 'prompt_default';
-    const systemPromt = get(`system_prompt.${systemPromptName}`);
+    const systemPromt = get(`system_prompt.${systemPromptName}`, `system_prompt.prompt_default`);
     const response = await this.chatsService.newChat(chatId, systemPromt, message);
 
     return response;

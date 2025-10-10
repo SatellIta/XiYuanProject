@@ -39,6 +39,7 @@ function loadConfigFile(fileName: string): any {
  * 则会回退到 `config/default_config.json` 文件中查找。
  *
  * @param key 要检索的配置键（例如 'port' 或 'database.host'）。
+ * @param defaultKey 可选的默认键，如果在两个文件中都找不到 `key`，则尝试使用这个键查找。
  * @returns 配置项的值，如果在两个文件中都找不到，则返回 undefined。
  */
 export function get(key: string, defaultKey?: any): any {
@@ -71,10 +72,31 @@ export function get(key: string, defaultKey?: any): any {
     return value;
   }
 
-  // 如果传入了默认值参数，则返回它
+
+  // 如果传入了默认值参数，则尝试从用户配置中获取它
+  if (defaultKey !== undefined) {
+    value = lodash.get(config, defaultKey);
+  }
+
+  if (value !== undefined) {
+    return value;
+  }
+
+  // 如果传入了默认值参数，则尝试从默认配置中获取它
+  if (defaultKey !== undefined) {
+    value = lodash.get(defaultConfig, defaultKey);
+  }
+
+  if (value !== undefined) {
+    return value;
+  }
+
+  // 如果都没有找到，则返回传入的默认值参数（可能是 undefined）
   if (defaultKey !== undefined) {
     return defaultKey;
   }
+
+  return undefined;
 }
 
 /**

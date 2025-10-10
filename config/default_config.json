@@ -17,8 +17,8 @@
   },
   "chat_help" : [
     "还没有完善，目前已经实现的功能如下：",
-    "1. 新建对话，不包含第一条玩家消息：POST{'chatId': string} /chats/new",
-    "2. 新建对话，包含第一条玩家消息：POST{'body': string, 'chatId': string} /chats/newgame",
+    "1. 新建对话，不包含第一条玩家消息：POST{'chatId': string, 'systemPromptName': string} /chats/new",
+    "2. 新建对话，包含第一条玩家消息：POST{'body': string, 'chatId': string, 'systemPromptName': string} /chats/newgame",
     "3. 继续对话：POST{'body': string, 'chatId': string} /chats/continue",
     "4. 诊断对话：GET /chats/diagnose/:chatId",
     "5. 查询对话是否存在：GET /chats/exists/:chatId",
