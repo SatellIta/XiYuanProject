@@ -4,6 +4,9 @@ using UnityEngine;
 
 public class MouseLook : MonoBehaviour
 {
+
+    public bool uiActive = false;
+
     [Header("Esc菜单脚本调用")]
     public ESCMenuManager ESCMenu; // 引用ESCMenu脚本以检查游戏是否暂停
     [Header("鼠标灵敏度设置")]
@@ -14,11 +17,12 @@ public class MouseLook : MonoBehaviour
     void Start()
     {
         Cursor.lockState = CursorLockMode.Locked; // 锁定鼠标光标
+        Cursor.visible = false;
     }
 
     void Update()
     {
-        if (ESCMenuManager.isGamePaused) return; // 如果游戏暂停，则不处理鼠标输入
+        if (ESCMenuManager.isGamePaused || uiActive) return; // 如果游戏暂停，则不处理鼠标输入
 
         // 获取鼠标输入，使用固定时间频率以确保平滑
         float mouseX = Input.GetAxis("Mouse X") * mouseSensitivity * Time.fixedDeltaTime;
