@@ -208,7 +208,7 @@ public class AIChatManager : MonoBehaviour
     public IEnumerator ShowScaleResult(int total, string level)
     {
         // 1️⃣ Compose the player's first message based on scale
-        string resultSummary = $"谢谢完成！你的总得分是 {total} 分（满分 40），整体状态{level}。";
+        string resultSummary = $"谢谢完成！你的总得分是 {total} 分（满分 32），整体状态{level}。";
         string prompt = $"{resultSummary} 接下来我们开始聊聊吧。";
 
         // Step 1️⃣ Type the summary text
@@ -237,9 +237,9 @@ public class AIChatManager : MonoBehaviour
         yield return StartCoroutine(SetSystemPrompt(total));
 
         string url = $"{server}/chats/new";
-        //string systemPromptName = "therapy"; // 🧩 change this to your actual system prompt name on the server
+        string systemPromptName = "therapy_prompt"; // 🧩 change this to your actual system prompt name on the server
 
-        string json = $"{{\"chatId\":\"{chatId}\"}}";
+        string json = $"{{\"chatId\":\"{chatId}\",\"systemPromptName\":\"{systemPromptName}\"}}";
 
         using UnityWebRequest req = new UnityWebRequest(url, "POST");
         byte[] raw = System.Text.Encoding.UTF8.GetBytes(json);
@@ -265,19 +265,19 @@ public class AIChatManager : MonoBehaviour
 
         if (total <= 8)
         {
-            return "你是一位专业的心理支持助手。用户的心理量表分数显示状态不错。请以温暖、支持性的语气回应用户，重点在于维持用户的良好状态，提供积极的肯定和建设性的建议。帮助用户巩固现有的心理资源，鼓励他们继续保持健康的生活方式和思维习惯。";
+            return "你是一位专业的心理支持助手。用户的心理量表分数显示状态不错。请以温暖、支持性的语气回应用户，重点在于维持用户的良好状态，提供积极的肯定和建设性的建议。帮助用户巩固现有的心理资源，鼓励他们继续保持健康的生活方式和思维习惯。注意请以对话的形式与用户交流，不要使用括号内的表示动作和神态的文字。";
         }
         else if (total <= 16)
         {
-            return "你是一位专业的心理支持助手。用户的心理量表分数显示状态一般，需要关注。请以关怀、理解的态度回应用户，耐心倾听他们的困扰，提供情感支持和实用的应对建议。帮助用户识别压力源，教授简单的压力管理技巧，鼓励他们建立健康的生活习惯。";
+            return "你是一位专业的心理支持助手。用户的心理量表分数显示状态一般，需要关注。请以关怀、理解的态度回应用户，耐心倾听他们的困扰，提供情感支持和实用的应对建议。帮助用户识别压力源，教授简单的压力管理技巧，鼓励他们建立健康的生活习惯。注意请以对话的形式与用户交流，不要使用括号内的表示动作和神态的文字。";
         }
         else if (total <= 24)
         {
-            return "你是一位专业的心理支持助手。用户的心理量表分数显示状态较严重，需要专业支持。请以温和但明确的方式回应用户，表达深切关怀的同时，建议寻求专业心理帮助。提供情感支持，帮助用户理解他们的感受是正常的，强调寻求帮助是勇敢的行为。可以建议一些即时可用的应对策略，但始终强调专业支持的重要性。";
+            return "你是一位专业的心理支持助手。用户的心理量表分数显示状态较严重，需要专业支持。请以温和但明确的方式回应用户，表达深切关怀的同时，建议寻求专业心理帮助。提供情感支持，帮助用户理解他们的感受是正常的，强调寻求帮助是勇敢的行为。可以建议一些即时可用的应对策略，但始终强调专业支持的重要性。注意请以对话的形式与用户交流，不要使用括号内的表示动作和神态的文字。";
         }
         else
         {
-            return "你是一位专业的心理支持助手。用户的心理量表分数显示状态很严重，急需专业干预。请以极其关怀和紧急的态度回应用户，强烈建议立即联系心理专业人士。提供危机干预的基本支持，帮助用户稳定情绪，但明确表示AI无法替代专业治疗。建议具体的求助途径（心理热线、医院心理科等），并鼓励用户不要独自承受。";
+            return "你是一位专业的心理支持助手。用户的心理量表分数显示状态很严重，急需专业干预。请以极其关怀和紧急的态度回应用户，强烈建议立即联系心理专业人士。提供危机干预的基本支持，帮助用户稳定情绪，但明确表示AI无法替代专业治疗。建议具体的求助途径（心理热线、医院心理科等），并鼓励用户不要独自承受。注意请以对话的形式与用户交流，不要使用括号内的表示动作和神态的文字。";
         }
     }
 
