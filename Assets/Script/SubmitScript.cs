@@ -19,6 +19,20 @@ public class SubmitScript : MonoBehaviour
 
     public MouseLook mouselook;
 
+    // 存储变量，方便外部调用
+    private int totalScore = -1;
+    private string syphotom = "暂无";
+
+    public int TotalScore()
+    {
+        return totalScore;
+    }
+
+    public string Syphotom()
+    {
+        return syphotom;
+    }
+
     // 提交按钮被点击时调用
     public void OnSubmitScale()
     {
@@ -39,7 +53,7 @@ public class SubmitScript : MonoBehaviour
             if (selected != null)
                 total += selected.transform.GetSiblingIndex();
         }
-
+        totalScore = total;
 
         // 简版解读
         string level = total switch
@@ -49,6 +63,7 @@ public class SubmitScript : MonoBehaviour
             <= 24 => "较严重，建议寻求专业支持",
             _ => "很严重，强烈建议联系心理专业人士"
         };
+        syphotom = level;
 
         // 关闭量表 + 清事件 + 回到对话
         if (submitBtn != null) submitBtn.onClick.RemoveAllListeners();

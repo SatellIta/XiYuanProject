@@ -40,12 +40,38 @@ public class AIChatManager : MonoBehaviour
     private string chatId;
     private bool isTyping = false;
 
+    private bool isChat = false;
+    private bool scaleFinished = false;
+
+    // 公共方法，用于查询是否已经触发该manager
+    public bool IsTrigger()
+    {
+        return hasBeenTriggered;
+    }
+
+    // 公共方法，用于其他方法查询当前对话情况
+    public bool IsChat()
+    {
+        return isChat;
+    }
+
+    // 公共方法，用于其他方法查询玩家是否完成量表
+    public bool IsScaleFinished()
+    {
+        return scaleFinished;
+    }
+
     // ① 被触发器调用：新建对话 + 拿 AI 第一句
     public void StartNewChat()
     {
         // 只激活一次
         if (hasBeenTriggered) return;
         hasBeenTriggered = true;
+
+        if (isChat == false)
+        {
+            isChat = true;
+        }
 
         chatId = DateTime.UtcNow.ToString("yyyy-MM-dd-HH:mm"); ;
         string welcome = welcomePool[UnityEngine.Random.Range(0, welcomePool.Length)];
@@ -204,6 +230,7 @@ public class AIChatManager : MonoBehaviour
 
         submitBtn.onClick.RemoveAllListeners();          // 防重复注册
         submitBtn.onClick.AddListener(scaleSubmit.OnSubmitScale);    //点击即提交
+        scaleFinished = true;
     }
     public IEnumerator ShowScaleResult(int total, string level)
     {
@@ -237,7 +264,7 @@ public class AIChatManager : MonoBehaviour
         yield return StartCoroutine(SetSystemPrompt(total));
 
         string url = $"{server}/chats/new";
-        string systemPromptName = "therapy_prompt"; // 🧩 change this to your actual system prompt name on the server
+        string systemPromptName = "therapy_prompt";
 
         string json = $"{{\"chatId\":\"{chatId}\",\"systemPromptName\":\"{systemPromptName}\"}}";
 
