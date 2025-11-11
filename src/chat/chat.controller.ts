@@ -57,7 +57,8 @@ export class ChatController {
     return response;
   }
 
-  // 用于诊断一个已有对话的POST方法
+  // 用于诊断一个已有对话的GET方法
+  // 这个方法已经废弃了，留在这而已
   @Get('diagnose/:chatId')
   async diagnoseChat(
     @Param('chatId') chatId: string,

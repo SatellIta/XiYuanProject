@@ -146,4 +146,25 @@ export class ChatService {
     const chats = await this.historyService.listChats();
     return chats;
   }
+
+  // 根据疗程总结存档对话
+  // 总结后会自动删除聊天记录
+  // 返回总结消息
+  async getTherapySummary(chatId: string, therapyState: number): Promise<string> {
+    const history = await this.getChatHistory(chatId);
+    if (history === null) {
+      return `${chatId} 对话不存在，无法生成总结！`;
+    }
+    // 构建系统消息
+    let systemPrompt = '';
+    systemPrompt = get(`system_prompt.therapy_summary_${therapyState}`);
+    const systemMessage: Chat = {
+      role: 'system',
+      content: systemPrompt
+    };
+    // 组织聊天记录
+    const messages: Chat[] = [systemMessage, ...history.slice(1)];  // slice(1)去掉最初的系统提示词
+    const response = await sendMessage(messages);
+    return removeRole(response);
+  }
 }

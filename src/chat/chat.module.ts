@@ -10,6 +10,7 @@ import { HistoryService } from './history.service';
   imports: [RedisModule],
   controllers: [ChatController, PromptController],
   providers: [ChatService, HistoryService, PromptService],
+  exports: [ChatService, HistoryService, RedisModule],      // 导出才能让save模块使用
 })
 
 export class ChatModule {}
