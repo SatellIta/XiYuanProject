@@ -1,0 +1,18 @@
+{
+  "chatId": "test-client-114-old",
+  "timestamp": 1763640000000,
+  "completedTherapySession": 2,
+  "inChat": false,
+  "chatHistory": null,
+  "therapySummary": [],
+  "problem": "用户因下周即将截止的重要项目感到极度焦虑，出现食欲不振和失眠等生理症状，主要困扰是担心无法按时完成项目工作",
+  "playerState": {
+    "anxiety": 50,
+    "happiness": 50,
+    "stress": 50,
+    "energy": 50,
+    "trust": 0,
+    "resilience": 0
+  },
+  "solution": "在睡前1小时关闭电子设备，并饮用温热的无咖啡因茶饮，以促进放松和改善失眠问题。"
+}

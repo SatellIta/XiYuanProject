@@ -1,11 +1,18 @@
-import { Controller, Get, Post, Body, Param } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Inject, forwardRef } from '@nestjs/common';
 import { Chat } from 'interfaces/chat';
 import { ChatService } from './chat.service';
 import { get } from 'utils/cfg';
+import { SaveService } from 'src/save/save.service';
+import { StrategyFactory } from './strategies/strategy.factory';
 
 @Controller('chats')
 export class ChatController {
-  constructor(private chatsService: ChatService) {}
+  constructor(
+    private chatsService: ChatService,
+    @Inject(forwardRef(() => SaveService))
+    private saveService: SaveService,
+    private strategyFactory: StrategyFactory,
+  ) {}
 
   // 默认页面展示帮助信息
   @Get()
@@ -53,6 +60,59 @@ export class ChatController {
     @Body('body') message: string,
   ): Promise<string> {
     const response = await this.chatsService.continueChat(chatId, message);
+    
+    return response;
+  }
+
+  // 用于确认问题或选择解决方案并结束当前疗程的POST方法
+  @Post('confirm-stage')
+  async confirmStage(
+    @Body('chatId') chatId: string,
+    @Body('problem') problem?: string,
+    @Body('solution') solution?: string,
+  ): Promise<{ success: boolean; message: string }> {
+    if (!chatId) {
+      return { success: false, message: '缺少 chatId 参数' };
+    }
+    
+    const payload = problem ? { problem } : { solution };
+    return this.chatsService.confirmStage(chatId, payload);
+  }
+
+  // 用于重置游戏到指定疗程的POST方法
+  @Post('reset-session')
+  async resetSession(
+    @Body('chatId') chatId: string,
+    @Body('sessionNumber') sessionNumber: number,
+  ): Promise<{ success: boolean; message: string }> {
+    if (!chatId || !sessionNumber || sessionNumber < 1) {
+      return { success: false, message: '缺少 chatId 或 sessionNumber 参数' };
+    }
+    
+    const success = await this.chatsService.resetSession(chatId, sessionNumber);
+
+    if (success) {
+      return { success: true, message: `已成功重置到疗程 ${sessionNumber}。` };
+    }
+    return { success: false, message: '重置失败，请检查存档是否存在。' };
+  }
+
+  // 从存档加载游戏并继续
+  // 客户端需要提供对话ID，可选提供用户消息
+  @Post('load')
+  async loadGame(
+    @Body('chatId') chatId: string,
+    @Body('body') message?: string,
+  ): Promise<string> {
+    // 读取存档
+    const saveData = await this.saveService.load(chatId);
+    
+    if (!saveData) {
+      return `未找到 ID 为 ${chatId} 的存档`;
+    }
+
+    // 调用 ChatService 恢复或开始新对话
+    const response = await this.chatsService.loadGame(saveData, message);
     
     return response;
   }

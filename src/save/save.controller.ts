@@ -35,11 +35,21 @@ export class SaveController {
     return `未找到对应的存档！`;
   }
 
+  // 创建新存档的POST方法
+  @Post('new')
+  async newSave(@Body('chatId') chatId: string): Promise<string> {
+    const success = await this.saveService.save(chatId, false, true); // isNew = true
+    if (success) {
+      return `新存档创建成功！`;
+    }
+    return `存档创建失败！`;
+  }
+
   // 以下是测试方法
   // 保存存档的GET方法
   @Get('testsave/:chatId')
   async testSave(
-    @Param('chatId') chatId: string,
+    @Param('chatId') chatId:string,
   ): Promise<string> {
     const dummySaveData: SaveData = {
       chatId,
@@ -55,6 +65,16 @@ export class SaveController {
           content: '我最近总是感到很焦虑，不知道怎么办。',
         }],
       therapySummary: ['用户主要问题是焦虑情绪，需要通过认知行为疗法进行干预。'],
+      problem: '焦虑症',
+      solution: null,
+      playerState: {
+        anxiety: 80,
+        happiness: 20,
+        stress: 70,
+        energy: 40,
+        trust: 10,
+        resilience: 5
+      }
     };
     const success = await this.saveService.saveData(dummySaveData);
     if (success) {

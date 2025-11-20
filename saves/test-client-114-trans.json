@@ -1,0 +1,18 @@
+{
+  "chatId": "test-client-114-trans",
+  "timestamp": 1763641976069,
+  "completedTherapySession": 0,
+  "inChat": false,
+  "chatHistory": null,
+  "therapySummary": [],
+  "problem": null,
+  "playerState": {
+    "anxiety": 50,
+    "happiness": 50,
+    "stress": 50,
+    "energy": 50,
+    "trust": 0,
+    "resilience": 0
+  },
+  "solution": null
+}

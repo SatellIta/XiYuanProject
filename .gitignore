@@ -24,6 +24,7 @@ lerna-debug.log*
 *.test.ts
 *test.ts
 *test.js
+test.*.ts
 
 # IDEs and editors
 /.idea

@@ -1,5 +1,5 @@
-import { Inject, Injectable } from '@nestjs/common';
-import { SaveData } from '../../interfaces/save';
+import { Inject, Injectable, forwardRef } from '@nestjs/common';
+import { SaveData, PlayerState } from '../../interfaces/save';
 // import { ChatService } from 'src/chat/chat.service';
 import { ChatModule } from 'src/chat/chat.module';
 import { Chat } from 'interfaces/chat';
@@ -17,6 +17,7 @@ const SAVE_PATH = "../../../saves/";
 export class SaveService {
   // 注入 ChatService 以获取聊天记录
   constructor(
+    @Inject(forwardRef(() => ChatService))
     private chatService: ChatService,
   ) {}
 
@@ -51,7 +52,16 @@ export class SaveService {
   }
 
   // 构造存档
-  async constructSaveData(chatId: string, completedTherapySession: number, inChat: boolean, chatHistory: Chat[] | null, therapySummary: string[]): Promise<SaveData> {
+  async constructSaveData(
+    chatId: string, 
+    completedTherapySession: number, 
+    inChat: boolean, 
+    chatHistory: Chat[] | null, 
+    therapySummary: string[],
+    problem: string | null,
+    playerState: PlayerState,
+    solution: string | null,
+  ): Promise<SaveData> {
     const timestamp = Date.now();
     return {
       chatId,
@@ -60,37 +70,93 @@ export class SaveService {
       inChat,
       chatHistory,
       therapySummary,
+      problem,
+      playerState,
+      solution,
     };
   }
 
   // 获取构造存档的全部信息，返回构造好的存档，供控制器调用
-  async save(chatId: string, inChat: boolean = true): Promise<boolean> {
+  async save(chatId: string, inChat: boolean = true, isNew: boolean = false): Promise<boolean> {
     // 读取当前存档
-    const currentSave = await this.loadData(chatId);
-    if (inChat == true) {
-      // 如果在对话中，则保留当前对话记录
-      const chatHistory = await this.chatService.getChatHistory(chatId);
-      const completedTherapySession = currentSave ? currentSave.completedTherapySession : 0;
-      const therapySummary = currentSave ? currentSave.therapySummary || [] : [];
-      const saveData = await this.constructSaveData(chatId, completedTherapySession, inChat, chatHistory, therapySummary);
-      return this.saveData(saveData);
-    } else {
-      // 如果不在对话中，则清空对话记录
-      const completedTherapySession = currentSave ? currentSave.completedTherapySession + 1 : 1;
-      let therapySummary: string[] = [];
-      if (currentSave && currentSave.therapySummary) {
-        therapySummary = [...currentSave.therapySummary, await this.chatService.getTherapySummary(chatId, completedTherapySession)];
+    const currentSave = isNew ? null : await this.loadData(chatId);
+
+    let saveData: SaveData;
+
+    if (currentSave) {
+      // 更新现有存档
+      const problem = currentSave.problem;
+      const playerState = currentSave.playerState;
+      const solution = currentSave.solution;
+      let completedTherapySession = currentSave.completedTherapySession;
+      let therapySummary = currentSave.therapySummary || [];
+      let chatHistory = currentSave.chatHistory;
+
+      if (inChat) {
+        chatHistory = await this.chatService.getChatHistory(chatId);
       } else {
-        therapySummary = [await this.chatService.getTherapySummary(chatId, completedTherapySession)];
+        completedTherapySession += 1;
+        const newSummary = await this.chatService.getTherapySummary(chatId, completedTherapySession);
+        therapySummary.push(newSummary);
+        chatHistory = null; // 结束对话，清空记录
       }
-      const chatHistory: any[] = [];
-      const saveData = await this.constructSaveData(chatId, completedTherapySession, inChat, chatHistory, therapySummary);
-      return this.saveData(saveData);
+      
+      saveData = await this.constructSaveData(chatId, completedTherapySession, inChat, chatHistory, therapySummary, problem, playerState, solution);
+
+    } else {
+      // 创建新存档
+      const playerState: PlayerState = {
+        anxiety: 50, happiness: 50, stress: 50,
+        energy: 50, trust: 0, resilience: 0
+      };
+      // For a new save, chat history should be null initially.
+      const chatHistory = null;
+      
+      saveData = await this.constructSaveData(
+        chatId,
+        0, // completedTherapySession
+        inChat, // Will be `false` when creating a new save from the controller
+        chatHistory,
+        [], // therapySummary
+        null, // problem
+        playerState,
+        null, // solution
+      );
     }
+    
+    return this.saveData(saveData);
   }
 
   // 供控制器调用，读取存档
   async load(chatId: string): Promise<SaveData | null> {
     return this.loadData(chatId);
+  }
+
+  // 重置存档到指定的疗程阶段
+  async resetToSession(chatId: string, sessionNumber: number): Promise<SaveData | null> {
+    const saveData = await this.loadData(chatId);
+    if (!saveData) {
+      return null;
+    }
+
+    // 根据要重置到的阶段，清除后续阶段的数据
+    if (sessionNumber <= 1) {
+      saveData.problem = null;
+      saveData.solution = null;
+    }
+    if (sessionNumber <= 2) {
+      saveData.solution = null;
+    }
+
+    saveData.completedTherapySession = sessionNumber - 1;
+    saveData.inChat = false; // 标记为需要开启新对话
+    saveData.chatHistory = null; // 清空历史
+
+    await this.saveData(saveData);
+    // 注意：重置存档时，也需要清理Redis中的聊天记录
+    // 这个操作移动到 ChatService 中，因为它同时管理 SaveService 和 HistoryService
+    // await this.historyService.deleteChatHistory(chatId);
+
+    return saveData;
   }
 }
