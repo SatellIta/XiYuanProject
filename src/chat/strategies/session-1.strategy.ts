@@ -10,7 +10,7 @@ import { removeRole } from 'utils/message';
 @Injectable()
 export class Session1Strategy implements ISessionStrategy {
   constructor(
-    @Inject(forwardRef(() => SaveService))
+    // @Inject(forwardRef(() => SaveService))
     private saveService: SaveService,
     private historyService: HistoryService,
   ) {}

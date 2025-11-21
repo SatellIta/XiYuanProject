@@ -9,7 +9,7 @@ import { StrategyFactory } from './strategies/strategy.factory';
 export class ChatController {
   constructor(
     private chatsService: ChatService,
-    @Inject(forwardRef(() => SaveService))
+    // @Inject(forwardRef(() => SaveService))
     private saveService: SaveService,
     private strategyFactory: StrategyFactory,
   ) {}

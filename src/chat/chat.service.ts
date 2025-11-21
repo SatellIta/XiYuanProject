@@ -15,7 +15,6 @@ export class ChatService {
   // 导入聊天记录服务
   constructor(
     private historyService: HistoryService,
-    @Inject(forwardRef(() => SaveService))
     private saveService: SaveService,
     private strategyFactory: StrategyFactory,
   ) {}

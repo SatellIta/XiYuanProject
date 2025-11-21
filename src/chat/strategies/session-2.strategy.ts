@@ -10,7 +10,7 @@ import { get } from 'utils/cfg';
 @Injectable()
 export class Session2Strategy implements ISessionStrategy {
   constructor(
-    @Inject(forwardRef(() => SaveService))
+    // @Inject(forwardRef(() => SaveService))
     private saveService: SaveService,
     private historyService: HistoryService,
   ) {}

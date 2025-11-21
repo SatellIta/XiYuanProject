@@ -1,11 +1,11 @@
 import { Inject, Injectable, forwardRef } from '@nestjs/common';
 import { SaveData, PlayerState } from '../../interfaces/save';
-// import { ChatService } from 'src/chat/chat.service';
 import { ChatModule } from 'src/chat/chat.module';
 import { Chat } from 'interfaces/chat';
 import * as fs from 'fs';
 import * as path from 'path';
-import { ChatService } from 'src/chat/chat.service';
+// import { ChatService } from 'src/chat/chat.service';
+import { HistoryService } from 'src/chat/history.service';
 import { Console, log } from 'console';
 
 const SAVE_PATH = "../../../saves/";
@@ -15,13 +15,12 @@ const SAVE_PATH = "../../../saves/";
 */
 @Injectable()
 export class SaveService {
-  // 注入 ChatService 以获取聊天记录
   constructor(
-    @Inject(forwardRef(() => ChatService))
-    private chatService: ChatService,
+    private historyService: HistoryService,
   ) {}
 
   // 传入存档数据，保存存档
+  // 这个saveData方法被session策略调用
   async saveData(saveData: SaveData): Promise<boolean> {
     try {
       const filePath = path.join(__dirname, SAVE_PATH, `${saveData.chatId}.json`);
@@ -77,6 +76,7 @@ export class SaveService {
   }
 
   // 获取构造存档的全部信息，返回构造好的存档，供控制器调用
+  // 注意这个save功能没有被session策略调用
   async save(chatId: string, inChat: boolean = true, isNew: boolean = false): Promise<boolean> {
     // 读取当前存档
     const currentSave = isNew ? null : await this.loadData(chatId);
@@ -93,11 +93,11 @@ export class SaveService {
       let chatHistory = currentSave.chatHistory;
 
       if (inChat) {
-        chatHistory = await this.chatService.getChatHistory(chatId);
+        chatHistory = await this.historyService.getChatHistory(chatId);
       } else {
         completedTherapySession += 1;
-        const newSummary = await this.chatService.getTherapySummary(chatId, completedTherapySession);
-        therapySummary.push(newSummary);
+        // const newSummary = await this.chatService.getTherapySummary(chatId, completedTherapySession);
+        // therapySummary.push(newSummary);
         chatHistory = null; // 结束对话，清空记录
       }
       
