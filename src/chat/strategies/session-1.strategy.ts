@@ -24,21 +24,8 @@ export class Session1Strategy implements ISessionStrategy {
     // 更新聊天记录
     await this.historyService.appendChatHistories(saveData.chatId, userMsg, response);
 
-    // 检查 AI 是否返回了问题总结 JSON
-    try {
-      const content = response.content.trim();
-      if (content.startsWith('{') && content.endsWith('}')) {
-        const jsonResponse = JSON.parse(content);
-        if (jsonResponse.problem) {
-          // 发现问题，直接返回 JSON 字符串给 ChatService，由它传递给前端
-          return content;
-        }
-      }
-    } catch (e) {
-      // 不是 JSON，忽略
-    }
-
-    return removeRole(response);
+    // 由于提示词已强制 AI 返回 JSON，此处直接返回其内容
+    return response.content;
   }
 
   async processStageTransition(response: { problem: string }, saveData: SaveData): Promise<{ success: boolean; message: string }> {
