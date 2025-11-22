@@ -200,11 +200,8 @@ export class ChatService {
     // 如果用户提供了消息，说明是主动继续对话，直接调用 continueChat
     if (userMessage) {
       const response = await this.continueChat(chatId, userMessage);
-      try {
-        return JSON.parse(response);
-      } catch (e) {
-        return { message: response };
-      }
+      
+      return response;
     }
 
     // 如果没有用户消息，则总是开启（或重新开启）一个新疗程
@@ -217,11 +214,8 @@ export class ChatService {
       // 开启新疗程后，将状态置为 inChat 并保存
       saveData.inChat = true;
       await this.saveService.saveData(saveData);
-      try {
-        return JSON.parse(response);
-      } catch (e) {
-        return { message: response };
-      }
+      
+      return response;
     }
     return { error: '无法开启新的疗程：未找到对应的策略。' };
   }
