@@ -24,7 +24,7 @@ public class SubmitScript : MonoBehaviour
     private string syphotom = "暂无";
 
     public int TotalScore()
-    {
+    {   
         return totalScore;
     }
 

@@ -1,7 +1,5 @@
 using UnityEngine;
 
-// 这个控制角色移动的脚本可以兼容rigidbody组件
-// 确保该对象上有关联的Rigidbody组件
 [RequireComponent(typeof(Rigidbody))]
 public class PlayerController : MonoBehaviour
 {
@@ -23,32 +21,41 @@ public class PlayerController : MonoBehaviour
     private Vector3 currentVelocity;
     private Vector3 targetVelocity;
 
-    // Start is called before the first frame update
     void Start()
     {
-        // 获取并存储Rigidbody组件的引用，以便后续使用
         rb = GetComponent<Rigidbody>();
     }
 
-    // Update is called once per frame
     void Update()
     {
-        // "Horizontal" 对应 A/D键 或 左右方向键
+        // ★ 核心修复：检查聊天状态
+        if (TherapyUIManager.IsChatActive) 
+        {
+            // 1. 归零输入值，防止残留
+            horizontalInput = 0f;
+            verticalInput = 0f;
+            
+            // 2. 归零目标速度，确保 FixedUpdate 能让角色停下来
+            targetVelocity = Vector3.zero;
+            
+            // 3. 此时再 Return，不再读取键盘
+            return; 
+        }
+
+        // 正常输入读取
         horizontalInput = Input.GetAxis("Horizontal");
-        // "Vertical" 对应 W/S键 或 上下方向键
         verticalInput = Input.GetAxis("Vertical");
-        // 计算目标移动向量
+        
         targetVelocity = (transform.forward * verticalInput + transform.right * horizontalInput) * moveSpeed;
     }
 
-    // FixedUpdate用于物理计算，它的调用频率是固定的
     void FixedUpdate()
     {
-        // 创建移动向量，结合前后和左右移动s
-        // Time.fixedDeltaTime确保移动是基于时间的，而不是帧率
-        // 使用Rigidbody.MovePosition来移动角色，这能保证物理交互的正确性
-        // 平滑过渡到目标速度
+        // 如果聊天打开，targetVelocity 已经被设为 (0,0,0)，
+        // 这里的 Lerp 会让角色平滑减速直到停止。
         currentVelocity = Vector3.Lerp(currentVelocity, targetVelocity, smoothFactor);
+        
+        // 保持原有的 Y 轴速度 (重力)
         rb.velocity = new Vector3(currentVelocity.x, rb.velocity.y, currentVelocity.z);
     }
 }
