@@ -7,6 +7,7 @@ import { get } from 'utils/cfg';
 import { HistoryService } from './history.service';
 import { SaveService } from 'src/save/save.service';
 import { StrategyFactory } from './strategies/strategy.factory';
+import { time } from 'console';
 
 // 聊天服务类，负责处理聊天相关的业务逻辑
 // 需要在这里处理与ai通信的逻辑
@@ -70,8 +71,11 @@ export class ChatService {
       return '当前疗程阶段的逻辑未实现。';
     }
 
+    // const timeStart = Date.now();
+    // console.log(`开始处理疗程${sessionNumber}的消息`);
     const responseContent = await strategy.handleMessage(history, userMessage, saveData);
-
+    // const timeEnd = Date.now();
+    // console.log(`疗程${sessionNumber}消息处理时间: ${timeEnd - timeStart} ms`);
 
     return responseContent;
   }
@@ -190,45 +194,36 @@ export class ChatService {
 
   // 从存档加载游戏
   // 根据存档状态恢复对话或开启新疗程
-  async loadGame(saveData: SaveData, userMessage?: string): Promise<string> {
-    const { chatId, inChat, completedTherapySession, chatHistory } = saveData;
+  async loadGame(saveData: SaveData, userMessage?: string): Promise<any> {
+    const { chatId, completedTherapySession } = saveData;
 
-    if (inChat) {
-      // 恢复聊天记录
-      if (chatHistory) {
-        await this.historyService.saveChatHistory(chatId, chatHistory);
-      }
-      
-      // 如果有用户消息，继续对话
-      if (userMessage) {
-        return this.continueChat(chatId, userMessage);
-      }
-      
-      // 否则返回最后一条 AI 消消息（如果有）
-      if (chatHistory && chatHistory.length > 0) {
-        const lastMsg : Chat = chatHistory[chatHistory.length - 1];
-        return removeRole(lastMsg);
-      }
-      return "存档已加载，等待用户输入...";
-    } else {
-      // 不在对话中，开启新疗程
-      const session = completedTherapySession + 1;
-      // 尝试获取对应疗程的 prompt
-      // 假设命名规则是 session_1, session_2...
-      let promptKey = `system_prompt.session_${session}`;
-      let systemPrompt = get(promptKey);
-      
-      if (!systemPrompt) {
-          // 如果没有特定疗程的 prompt，使用默认的
-          systemPrompt = get('system_prompt.prompt_default');
-      }
-      
-      if (userMessage) {
-        return this.newChat(chatId, systemPrompt, userMessage);
-      } else {
-        return this.newChatOnlySystem(chatId, systemPrompt);
+    // 如果用户提供了消息，说明是主动继续对话，直接调用 continueChat
+    if (userMessage) {
+      const response = await this.continueChat(chatId, userMessage);
+      try {
+        return JSON.parse(response);
+      } catch (e) {
+        return { message: response };
       }
     }
+
+    // 如果没有用户消息，则总是开启（或重新开启）一个新疗程
+    // 这会覆盖掉“inChat”但历史记录不完整的坏档
+    const sessionNumber = completedTherapySession + 1;
+    const strategy = this.strategyFactory.getStrategy(sessionNumber);
+    
+    if (strategy && strategy.startSession) {
+      const response = await strategy.startSession(saveData);
+      // 开启新疗程后，将状态置为 inChat 并保存
+      saveData.inChat = true;
+      await this.saveService.saveData(saveData);
+      try {
+        return JSON.parse(response);
+      } catch (e) {
+        return { message: response };
+      }
+    }
+    return { error: '无法开启新的疗程：未找到对应的策略。' };
   }
 
   // 重置会话到指定阶段

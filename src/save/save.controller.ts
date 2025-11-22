@@ -1,6 +1,6 @@
 import { Controller, Get, Post, Body, Param } from '@nestjs/common';
 import { SaveService } from './save.service';
-import { SaveData } from '../../interfaces/save';
+import type { SaveData } from '../../interfaces/save';
 
 @Controller('saves')
 export class SaveController {
@@ -35,6 +35,15 @@ export class SaveController {
     return `未找到对应的存档！`;
   }
 
+  // 检查存档是否存在的GET方法
+  @Get('exists/:chatId')
+  async exists(
+    @Param('chatId') chatId: string,
+  ): Promise<{ exists: boolean }> {
+    const exists = await this.saveService.exists(chatId);
+    return { exists };
+  }
+
   // 创建新存档的POST方法
   @Post('new')
   async newSave(@Body('chatId') chatId: string): Promise<string> {
@@ -43,6 +52,23 @@ export class SaveController {
       return `新存档创建成功！`;
     }
     return `存档创建失败！`;
+  }
+
+  // 从客户端同步存档到云端
+  @Post('sync')
+  async sync(@Body() saveData: SaveData): Promise<string> {
+    if (!saveData || !saveData.chatId) {
+      return '存档同步失败：无效的存档数据。';
+    }
+    
+    // 更新时间戳为当前服务器时间
+    saveData.timestamp = Date.now();
+
+    const success = await this.saveService.saveData(saveData);
+    if (success) {
+      return `存档 ${saveData.chatId} 已成功同步到云端！`;
+    }
+    return `存档 ${saveData.chatId} 同步失败！`;
   }
 
   // 以下是测试方法

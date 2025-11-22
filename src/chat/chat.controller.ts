@@ -99,20 +99,20 @@ export class ChatController {
 
   // 从存档加载游戏并继续
   // 客户端需要提供对话ID，可选提供用户消息
+  // 会返回给客户端AI的JSON字符串回复
   @Post('load')
   async loadGame(
     @Body('chatId') chatId: string,
     @Body('body') message?: string,
   ): Promise<string> {
-    // 读取存档
+    // 检查 ID 为 chatId 的存档是否存在
     const saveData = await this.saveService.load(chatId);
-    
     if (!saveData) {
       return `未找到 ID 为 ${chatId} 的存档`;
     }
 
     // 调用 ChatService 恢复或开始新对话
-    const response = await this.chatsService.loadGame(saveData, message);
+    const response = await this.chatsService.loadGame(saveData, message ?? '');
     
     return response;
   }

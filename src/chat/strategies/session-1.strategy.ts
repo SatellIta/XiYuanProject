@@ -6,14 +6,27 @@ import { sendMessage } from 'utils/openai';
 import { SaveService } from 'src/save/save.service';
 import { HistoryService } from '../history.service';
 import { removeRole } from 'utils/message';
+import { get } from 'utils/cfg';
 
 @Injectable()
 export class Session1Strategy implements ISessionStrategy {
   constructor(
-    // @Inject(forwardRef(() => SaveService))
     private saveService: SaveService,
     private historyService: HistoryService,
   ) {}
+
+  // 开启新疗程时，由AI发送第一条消息
+  async startSession(saveData: SaveData): Promise<string> {
+    const systemPrompt = get('system_prompt.session_1');
+    const messages: Chat[] = [{ role: 'system', content: systemPrompt }];
+    
+    const response = await sendMessage(messages);
+    
+    // 保存初始的系统消息和AI回复到历史记录
+    await this.historyService.saveChatHistory(saveData.chatId, [messages[0], response]);
+
+    return response.content;
+  }
 
   async handleMessage(history: Chat[], userMessage: string, saveData: SaveData): Promise<string> {
     const userMsg: Chat = { role: 'user', content: userMessage };

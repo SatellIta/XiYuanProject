@@ -11,11 +11,23 @@ import { removeRole } from 'utils/message';
 export class Session3Strategy implements ISessionStrategy {
   constructor(private historyService: HistoryService) {}
 
+  // 开启新疗程时，由AI发送第一条消息
+  async startSession(saveData: SaveData): Promise<string> {
+    // 对于第三疗程，开始逻辑与用户发送第一条消息类似，
+    // 因此我们可以复用 handleMessage 方法，并传入一个通用的开场白。
+    const initialMessage = "我们已经确认了解决方案，接下来我该做什么呢？";
+    // 注意：此时历史记录可能是空的，所以我们从Redis获取
+    const history = await this.historyService.getChatHistory(saveData.chatId);
+    return this.handleMessage(history, initialMessage, saveData);
+  }
+
   async handleMessage(history: Chat[], userMessage: string, saveData: SaveData): Promise<string> {
     // 判断用户状态
     const timeSinceLastSave = Date.now() - saveData.timestamp;
     const isReturningAfterBreak = timeSinceLastSave > 1000 * 60 * 60; // 超过1小时
     const isFirstMessageInSession = history.length <= 1;
+
+    const isReturning = isReturningAfterBreak && isFirstMessageInSession;
 
     // 根据状态选择提示词的键
     const promptKey = (isReturningAfterBreak && isFirstMessageInSession)
@@ -41,7 +53,9 @@ export class Session3Strategy implements ISessionStrategy {
     // 更新对话历史
     await this.historyService.appendChatHistories(saveData.chatId, userMsg, response);
 
-    // 直接返回 AI 生成的 JSON 字符串
-    return response.content;
+    // 返回添加了 isReturning 字段的 JSON 
+    const aiJson = JSON.parse(response.content);
+    aiJson.is_returning = isReturning;
+    return aiJson;
   }
 }

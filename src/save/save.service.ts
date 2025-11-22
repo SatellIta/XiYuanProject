@@ -132,6 +132,12 @@ export class SaveService {
     return this.loadData(chatId);
   }
 
+  // 检查存档是否存在
+  async exists(chatId: string): Promise<boolean> {
+    const filePath = path.join(__dirname, SAVE_PATH, `${chatId}.json`);
+    return fs.existsSync(filePath);
+  }
+
   // 重置存档到指定的疗程阶段
   async resetToSession(chatId: string, sessionNumber: number): Promise<SaveData | null> {
     const saveData = await this.loadData(chatId);

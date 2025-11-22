@@ -10,10 +10,23 @@ import { get } from 'utils/cfg';
 @Injectable()
 export class Session2Strategy implements ISessionStrategy {
   constructor(
-    // @Inject(forwardRef(() => SaveService))
     private saveService: SaveService,
     private historyService: HistoryService,
   ) {}
+
+  // 开启新疗程时，由AI发送第一条消息
+  async startSession(saveData: SaveData): Promise<string> {
+    let systemPrompt = get('system_prompt.session_2');
+    systemPrompt = systemPrompt.replace('{problem}', saveData.problem || '未定义');
+    
+    const messages: Chat[] = [{ role: 'system', content: systemPrompt }];
+    const response = await sendMessage(messages);
+
+    // 保存初始的系统消息和AI回复到历史记录
+    await this.historyService.saveChatHistory(saveData.chatId, [messages[0], response]);
+
+    return response.content;
+  }
 
   async handleMessage(history: Chat[], userMessage: string, saveData: SaveData): Promise<string> {
     // 获取并格式化 session_2 的基础提示词
