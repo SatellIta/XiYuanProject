@@ -38,11 +38,25 @@ public class DoorInteraction : MonoBehaviour
     // 开关门的核心逻辑
     public void ToggleDoor()
     {
+
+        // 如果门是锁定的，播放锁定音效并退出
+        if (isLocked)
+        {
+            // 播放锁定音效
+            if (lockedSound != null)
+            {
+                audioSource.PlayOneShot(lockedSound);
+            }
+            Debug.Log("门 '" + name + "' 是锁定的，无法打开！");
+            return; 
+        }
+
         isOpen = !isOpen;
 
         // 使用我们指定的doorAnimator来控制动画
         doorAnimator.SetBool("IsOpen", isOpen);
         audioSource = GetComponent<AudioSource>(); // 获取 AudioSource 组件
+
         // 根据门的新状态播放对应的音效
         if (isOpen)
         {

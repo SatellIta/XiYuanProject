@@ -22,7 +22,7 @@ public class MouseLook : MonoBehaviour
 
     void Update()
     {
-        if (ESCMenuManager.isGamePaused || uiActive) return; // 如果游戏暂停，则不处理鼠标输入
+        if (ESCMenuManager.isGamePaused || uiActive || TherapyUIManager.IsChatActive) return; // 如果游戏暂停或聊天界面激活，则不处理鼠标输入
 
         // 获取鼠标输入，使用固定时间频率以确保平滑
         float mouseX = Input.GetAxis("Mouse X") * mouseSensitivity * Time.fixedDeltaTime;
