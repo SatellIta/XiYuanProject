@@ -5525,6 +5525,7 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: -20, y: -20}
   m_Pivot: {x: 0.5, y: 0.5}
+<<<<<<< HEAD
 --- !u!1001 &404357171
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -5599,6 +5600,8 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 1408532510268983380, guid: 98ea15acd4af41342a8cb5f6a5b31077, type: 3}
   m_PrefabInstance: {fileID: 404357171}
   m_PrefabAsset: {fileID: 0}
+=======
+>>>>>>> 3035cbfc78891c9e60539ee70507a49ff520c1a1
 --- !u!43 &409908702
 Mesh:
   m_ObjectHideFlags: 0
@@ -8076,6 +8079,7 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 554572996}
   m_CullTransparentMesh: 1
+<<<<<<< HEAD
 --- !u!1 &561416922
 GameObject:
   m_ObjectHideFlags: 0
@@ -8429,6 +8433,8 @@ MonoBehaviour:
   m_SelectedFaces: 
   m_SelectedEdges: []
   m_SelectedVertices: 
+=======
+>>>>>>> 3035cbfc78891c9e60539ee70507a49ff520c1a1
 --- !u!1 &562532373
 GameObject:
   m_ObjectHideFlags: 0
@@ -10388,6 +10394,7 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 5fcdfb714aae5af4da09359d7c60ea68, type: 3}
+<<<<<<< HEAD
 --- !u!1 &667314393
 GameObject:
   m_ObjectHideFlags: 0
@@ -10482,6 +10489,8 @@ Light:
   m_UseViewFrustumForShadowCasterCull: 1
   m_ShadowRadius: 0
   m_ShadowAngle: 0
+=======
+>>>>>>> 3035cbfc78891c9e60539ee70507a49ff520c1a1
 --- !u!1 &675885891
 GameObject:
   m_ObjectHideFlags: 0
@@ -17441,6 +17450,7 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: -20, y: -20}
   m_Pivot: {x: 0.5, y: 0.5}
+<<<<<<< HEAD
 --- !u!1 &1180162884
 GameObject:
   m_ObjectHideFlags: 0
@@ -17480,6 +17490,8 @@ Transform:
   - {fileID: 404357172}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+=======
+>>>>>>> 3035cbfc78891c9e60539ee70507a49ff520c1a1
 --- !u!1 &1198631604
 GameObject:
   m_ObjectHideFlags: 0
@@ -19344,6 +19356,7 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 8226370058011548335, guid: 1455a4b451368314a892d9db267ee637, type: 3}
   m_PrefabInstance: {fileID: 489504615}
   m_PrefabAsset: {fileID: 0}
+<<<<<<< HEAD
 --- !u!1 &1263651560
 GameObject:
   m_ObjectHideFlags: 0
@@ -19697,6 +19710,8 @@ MonoBehaviour:
   m_SelectedFaces: 
   m_SelectedEdges: []
   m_SelectedVertices: 
+=======
+>>>>>>> 3035cbfc78891c9e60539ee70507a49ff520c1a1
 --- !u!1 &1263919588
 GameObject:
   m_ObjectHideFlags: 0
@@ -22249,6 +22264,7 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
+<<<<<<< HEAD
 --- !u!1 &1437478027
 GameObject:
   m_ObjectHideFlags: 0
@@ -22354,6 +22370,8 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1437478027}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+=======
+>>>>>>> 3035cbfc78891c9e60539ee70507a49ff520c1a1
 --- !u!1 &1444536199
 GameObject:
   m_ObjectHideFlags: 0
@@ -25607,6 +25625,7 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1619529047}
   m_CullTransparentMesh: 1
+<<<<<<< HEAD
 --- !u!1 &1626936101
 GameObject:
   m_ObjectHideFlags: 0
@@ -25960,6 +25979,8 @@ MonoBehaviour:
   m_SelectedFaces: 
   m_SelectedEdges: []
   m_SelectedVertices: 
+=======
+>>>>>>> 3035cbfc78891c9e60539ee70507a49ff520c1a1
 --- !u!1 &1655251829
 GameObject:
   m_ObjectHideFlags: 0
@@ -33458,6 +33479,7 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1791977222}
   m_CullTransparentMesh: 1
+<<<<<<< HEAD
 --- !u!1 &1792512664
 GameObject:
   m_ObjectHideFlags: 0
@@ -33563,6 +33585,8 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1792512664}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+=======
+>>>>>>> 3035cbfc78891c9e60539ee70507a49ff520c1a1
 --- !u!1 &1793857668
 GameObject:
   m_ObjectHideFlags: 0
@@ -34948,6 +34972,7 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 5fcdfb714aae5af4da09359d7c60ea68, type: 3}
+<<<<<<< HEAD
 --- !u!1 &1852167598
 GameObject:
   m_ObjectHideFlags: 0
@@ -35053,6 +35078,8 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1852167598}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+=======
+>>>>>>> 3035cbfc78891c9e60539ee70507a49ff520c1a1
 --- !u!4 &1854286179 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 3066017659538602917, guid: ffc00797488db514da59d22409013665, type: 3}
@@ -36136,6 +36163,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_IsOn: 1
+<<<<<<< HEAD
 --- !u!43 &1918792055
 Mesh:
   m_ObjectHideFlags: 0
@@ -36301,6 +36329,8 @@ Mesh:
     offset: 0
     size: 0
     path: 
+=======
+>>>>>>> 3035cbfc78891c9e60539ee70507a49ff520c1a1
 --- !u!1 &1930219516
 GameObject:
   m_ObjectHideFlags: 0
@@ -39915,6 +39945,7 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2119632566}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+<<<<<<< HEAD
 --- !u!1 &2122468312
 GameObject:
   m_ObjectHideFlags: 0
@@ -40268,6 +40299,8 @@ MonoBehaviour:
   m_SelectedFaces: 
   m_SelectedEdges: []
   m_SelectedVertices: 
+=======
+>>>>>>> 3035cbfc78891c9e60539ee70507a49ff520c1a1
 --- !u!4 &2126298454 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 8226370058011548335, guid: 1455a4b451368314a892d9db267ee637, type: 3}
@@ -41069,5 +41102,8 @@ SceneRoots:
   - {fileID: 1024467798}
   - {fileID: 2137500989}
   - {fileID: 562532375}
+<<<<<<< HEAD
   - {fileID: 1162720047}
   - {fileID: 1180162885}
+=======
+>>>>>>> 3035cbfc78891c9e60539ee70507a49ff520c1a1
