@@ -3876,7 +3876,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   uiActive: 0
-  ESCMenu: {fileID: 0}
   mouseSensitivity: 120
 --- !u!1 &319256829
 GameObject:
@@ -38807,13 +38806,13 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2065670136}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 778f0118ca4dd2f47af1f08f76874e0b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  chatManager: {fileID: 2018433467}
-  submitScript: {fileID: 1805322588}
+  therapyGameManager: {fileID: 1024467797}
+  therapyUIManager: {fileID: 2137500988}
 --- !u!114 &2065670141
 MonoBehaviour:
   m_ObjectHideFlags: 0

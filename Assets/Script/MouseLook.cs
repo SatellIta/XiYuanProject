@@ -7,8 +7,6 @@ public class MouseLook : MonoBehaviour
 
     public bool uiActive = false;
 
-    [Header("Esc菜单脚本调用")]
-    public ESCMenuManager ESCMenu; // 引用ESCMenu脚本以检查游戏是否暂停
     [Header("鼠标灵敏度设置")]
     [Tooltip("调整鼠标灵敏度")]
     public float mouseSensitivity = 100f; // 鼠标灵敏度
@@ -22,7 +20,7 @@ public class MouseLook : MonoBehaviour
 
     void Update()
     {
-        if (ESCMenuManager.isGamePaused || uiActive || TherapyUIManager.IsChatActive) return; // 如果游戏暂停或聊天界面激活，则不处理鼠标输入
+        if (GameEventSystem.Instance.IsGamePaused() || GameEventSystem.Instance.IsInChat()) return; // 如果游戏暂停或聊天界面激活，则不处理鼠标输入
 
         // 获取鼠标输入，使用固定时间频率以确保平滑
         float mouseX = Input.GetAxis("Mouse X") * mouseSensitivity * Time.fixedDeltaTime;

@@ -3,17 +3,18 @@
 // 可以给其他组件提供一个查询当前游戏进度的框架
 using UnityEngine;
 
+// 全局游戏事件与状态系统 (单例模式)，作为游戏关键信息的信息中心，供其他脚本查询。
 public class GameEventSystem : MonoBehaviour
 {
     // 创建一个静态的、全局可访问的实例
     public static GameEventSystem Instance { get; private set; }
 
     [Header("管理器引用")]
-    [Tooltip("请将场景中挂载了 AIChatManager 脚本的对象拖拽到这里")]
-    [SerializeField] private AIChatManager chatManager;
+    [Tooltip("请将场景中挂载了 TherapyGameManager 脚本的对象拖拽到这里")]
+    [SerializeField] private TherapyGameManager therapyGameManager;
 
-    [Tooltip("请将场景中挂载了 SubmitScript 脚本的对象拖拽到这里")]
-    [SerializeField] private SubmitScript submitScript;
+    [Tooltip("请将场景中挂载了 TherapyUIManager 脚本的对象拖拽到这里")]
+    [SerializeField] private TherapyUIManager therapyUIManager;
 
     void Awake()
     {
@@ -35,70 +36,40 @@ public class GameEventSystem : MonoBehaviour
     void Start()
     {
         // 在游戏开始时检查引用是否已正确设置，提供清晰的错误提示
-        if (chatManager == null)
+        if (therapyGameManager == null)
         {
-            Debug.LogError("GameEventSystem 错误：未关联 AIChatManager！", this);
+            Debug.LogError("GameEventSystem 错误：未关联 TherapyGameManager！", this);
         }
-        if (submitScript == null)
+        if (therapyUIManager == null)
         {
-            Debug.LogError("GameEventSystem 错误：未关联 SubmitScript！", this);
+            Debug.LogError("GameEventSystem 错误：未关联 TherapyUIManager！", this);
         }
     }
 
     // --- 公共查询方法 ---
 
-    // 查询AI对话管理器是否已经被触发
-    public bool IsChatManagerTriggered()
+    // 查询游戏是否已暂停 (ESC菜单是否打开)
+    public bool IsGamePaused()
     {
-        if (chatManager != null)
+        // 直接访问 TherapyUIManager 的静态变量，这是最快的方式
+        return TherapyUIManager.IsGamePaused;
+    }
+
+    // 查询游戏主流程是否已经开始
+    public bool IsGameStarted()
+    {
+        if (therapyGameManager != null)
         {
-            return chatManager.IsTrigger();
+            return therapyGameManager.IsGameStarted();
         }
-        Debug.LogWarning("尝试查询AIChatManager触发状态，但 AIChatManager 未设置。");
+        Debug.LogWarning("尝试查询游戏开始状态，但 TherapyGameManager 未设置。");
         return false;
     }
 
-    // 查询当前是否处于对话流程中。
-    public bool IsChatting()
+    // 查询当前聊天面板是否打开
+    public bool IsInChat()
     {
-        if (chatManager != null)
-        {
-            return chatManager.IsChat();
-        }
-        Debug.LogWarning("尝试查询对话状态，但 AIChatManager 未设置。");
-        return false;
-    }
-
-    // 查询玩家是否已经完成了量表填写。
-    public bool IsScaleFinished()
-    {
-        if (chatManager != null)
-        {
-            return chatManager.IsScaleFinished();
-        }
-        Debug.LogWarning("尝试查询量表完成状态，但 AIChatManager 未设置。");
-        return false;
-    }
-
-    // 获取量表总分。
-    public int GetTotalScaleScore()
-    {
-        if (submitScript != null)
-        {
-            return submitScript.TotalScore();
-        }
-        Debug.LogWarning("尝试获取量表分数，但 SubmitScript 未设置。");
-        return -1;
-    }
-
-    // 获取根据分数生成的简版症状描述。
-    public string GetSymptomLevel()
-    {
-        if (submitScript != null)
-        {
-            return submitScript.Syphotom();
-        }
-        Debug.LogWarning("尝试获取症状描述，但 SubmitScript 未设置。");
-        return "暂无";
+        // 直接访问 TherapyUIManager 的静态变量
+        return TherapyUIManager.IsChatActive;
     }
 }

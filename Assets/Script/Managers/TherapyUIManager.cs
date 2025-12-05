@@ -70,6 +70,9 @@ public class TherapyUIManager : MonoBehaviour
     public Action onReturnToMenu; // 返回主菜单事件
     public Action onQuitWithoutSave; // ★ 新增：不保存退出事件
 
+    // 公共查询接口
+    public bool IsInChat() => chatPanel.activeSelf;
+
     // --- 1. 基础聊天功能 ---
 
     public void AddUserMessage(string text)
@@ -136,6 +139,9 @@ public class TherapyUIManager : MonoBehaviour
             returnToMenuBtn.onClick.RemoveAllListeners();
             returnToMenuBtn.onClick.AddListener(() => {
                 TogglePauseMenu(false); // 先关UI
+                // 显示鼠标
+                Cursor.lockState = CursorLockMode.None;
+                Cursor.visible = true;
                 onReturnToMenu?.Invoke(); // 通知 Manager 保存并退出
             });
         }
@@ -203,7 +209,6 @@ public class TherapyUIManager : MonoBehaviour
         
         // 2. ★ 关键修复：重置缩放和位置
         cell.transform.localScale = Vector3.one; 
-        cell.transform.localPosition = Vector3.zero; // Z轴归零
         
         // 3. 确保物体激活
         cell.gameObject.SetActive(true);
@@ -277,7 +282,7 @@ public class TherapyUIManager : MonoBehaviour
         }
         else
         {
-            // 恢复游戏时，如果不在聊天状态，可能需要锁定鼠标(根据你的游戏类型)
+            // 恢复时，如果不在聊天界面，则锁定鼠标
             if (!IsChatActive)
             {
                 Cursor.lockState = CursorLockMode.Locked;
@@ -328,6 +333,8 @@ public class TherapyUIManager : MonoBehaviour
         {
             // 关闭所有面板
             SwitchToPanel(null); 
+            Cursor.lockState = CursorLockMode.Locked;
+            Cursor.visible = false;
             if (inputField != null) inputField.DeactivateInputField();
         }
     }
