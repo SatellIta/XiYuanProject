@@ -17,6 +17,10 @@ public class TherapyGameManager : MonoBehaviour
     private SaveDataDTO currentSaveData;
     private bool isGameStarted = false; 
 
+    // 公共接口，用于其他脚本查询游戏状态
+    public bool IsGameStarted() => isGameStarted;
+    public bool IsInChat() => ui.IsInChat();
+
     private async void Start()
     {
         // 绑定输入事件
@@ -331,7 +335,10 @@ public class TherapyGameManager : MonoBehaviour
                 onSelected: (choice) => ConfirmStageLogic(solution: choice),
                 
                 // 这里不会静默发送请求，而是聊天框内默认填充 "这些方案我都不太满意，我想再讨论一下。"
-                onContinue: () => { }
+                onContinue: () =>
+                {
+                    ui.SetInputState(true);
+                }
             );
             return;
         }

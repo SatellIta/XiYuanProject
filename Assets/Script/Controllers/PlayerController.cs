@@ -29,7 +29,7 @@ public class PlayerController : MonoBehaviour
     void Update()
     {
         // ★ 核心修复：检查聊天状态
-        if (TherapyUIManager.IsChatActive) 
+        if (GameEventSystem.Instance.IsInChat() || GameEventSystem.Instance.IsGamePaused()) 
         {
             // 1. 归零输入值，防止残留
             horizontalInput = 0f;

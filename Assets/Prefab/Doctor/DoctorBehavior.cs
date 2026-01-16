@@ -1,3 +1,6 @@
+// 先别用，重构项目后doctor行为脚本会重新编写
+
+/*
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -143,3 +146,4 @@ public class DoctorBehavior : MonoBehaviour
         transform.rotation = initialRotation; // 恢复初始朝向
     }
 }
+*/

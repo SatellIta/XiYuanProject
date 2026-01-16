@@ -1,4 +1,6 @@
-﻿using System;
+﻿// 注意这是游戏第一版使用的ai聊天系统，现在已经被新版替代，保留仅供参考
+
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using TMPro;
