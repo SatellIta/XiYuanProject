@@ -1,9 +1,9 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 // 现在玩家触发开门的逻辑部分在PlayerInteraction脚本中处理
 // 这个脚本专注于门的具体交互行为
 [RequireComponent(typeof(AudioSource))]
-public class DoorInteraction : MonoBehaviour
+public class DoorInteraction : MonoBehaviour, IInteractable
 {
     [Header("动画对象设置")]
     [Tooltip("请将需要旋转的子对象拖拽到这里")]
@@ -35,6 +35,27 @@ public class DoorInteraction : MonoBehaviour
             enabled = false; // 禁用脚本
         }
     }
+
+    // 实现接口的“交互提示文本”属性
+    public string InteractionPrompt => isLocked ? "门已锁定" : isOpen ? "按E关上门" : "按E打开门";
+
+
+    // 实现接口的“是否可交互”方法
+    public bool CanInteract()
+    {
+        // 锁定状态不可交互，否则可交互
+        return !isLocked;
+    }
+
+    // 实现接口的“核心交互”方法
+    public void Interact()
+    {
+        // 直接复用原有ToggleDoor逻辑，无改动
+        ToggleDoor();
+    }
+
+    public Transform Transform => transform;
+
     // 开关门的核心逻辑
     public void ToggleDoor()
     {
