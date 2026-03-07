@@ -6,6 +6,7 @@ import { sendMessage } from 'utils/openai';
 import { HistoryService } from '../history.service';
 import { get } from 'utils/cfg';
 import { removeRole } from 'utils/message';
+import { forEach, List } from 'lodash';
 
 @Injectable()
 export class Session3Strategy implements ISessionStrategy {
@@ -36,9 +37,13 @@ export class Session3Strategy implements ISessionStrategy {
 
     // 获取并格式化提示词
     let systemPrompt = get(promptKey);
-    const levels = get('levels', []); // 从配置中读取关卡列表
-    const levelsString = JSON.stringify(levels);
-
+    const levels: string[] = get('levels', []); // 从配置中读取关卡列表
+    const levelDescriptions: string[] = get('level_descriptions', []); // 读取关卡描述
+    let levelsString: string[] = levels.map((level, index) => {
+      const description = levelDescriptions[index] ?? "";
+      return `${level}，关卡描述${description}；`;
+    });
+  
     systemPrompt = systemPrompt.replace('{problem}', saveData.problem || '未定义');
     systemPrompt = systemPrompt.replace('{solution}', saveData.solution || '未定义');
     systemPrompt = systemPrompt.replace('{levels}', levelsString); // 注入关卡列表
