@@ -488,11 +488,38 @@ public class TherapyGameManager : MonoBehaviour
         );
     }
 
-    private void EnterLevel(TherapyLevelID levelId)
+    private async void EnterLevel(TherapyLevelID levelId)
     {
         Debug.Log($"[GameManager] 进入关卡: {levelId}");
-        _ = SaveCheckpoint(syncToCloud: false); 
-        ui.AddAIMessage($"[系统] 正在加载 '{levelId}' 模块...");
+        await SaveCheckpoint(syncToCloud: true); 
+        ui.SetInLevel(true);
+        Debug.Log($"[系统] 正在加载 '{levelId}' 模块...");
+
+        bool levelResult = await RunLevel(levelId);
+
+        ui.SetInLevel(false);
+        ui.ShowChatUI();
+
+        if (levelResult)
+        {
+            Debug.Log($"[GameManager] 关卡 '{levelId}' 完成，通知后端...");
+        }
+        else
+        {
+            Debug.Log($"[GameManager] 关卡 '{levelId}' 未完成，返回聊天界面。");
+            ui.AddAIMessage($"你已经退出了 {levelId} 关卡。");
+        }
+    }
+
+    // 调用 TherapyLevelManager 来运行关卡，并等待结果
+    private async Task<bool> RunLevel(TherapyLevelID levelId)
+    {
+        Debug.Log($"正在等待玩家前往 '{levelId}' 关卡场景并完成挑战...");
+
+        await Task.Delay(10000); // 模拟等待玩家完成关卡
+
+        // return await TherapyLevelManager.Instance.RunLevel(levelId);
+        return true;
     }
 
     private async void OnUserRequestFinishTherapy()
