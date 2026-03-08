@@ -158,7 +158,7 @@ public class AIChatManager : MonoBehaviour
     }
 
     // ③ 逐字显示字幕
-    private IEnumerator TypeSubtitle(string fullText, System.Action onDone)
+    public IEnumerator TypeSubtitle(string fullText, System.Action onDone)
     {
         isTyping = true;
         subtitle.text = "";
