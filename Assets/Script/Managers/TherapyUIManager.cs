@@ -9,6 +9,7 @@ public class TherapyUIManager : MonoBehaviour
     // ★ 全局静态开关：供角色控制脚本读取
     public static bool IsChatActive { get; private set; } = false;
     public static bool IsGamePaused { get; private set; } = false;
+    public static bool IsInLevel { get; private set;} = false;
     [Header("暂停菜单")]
     [SerializeField] private GameObject pauseMenuPanel;
     [SerializeField] private Button resumeBtn;
@@ -164,10 +165,15 @@ public class TherapyUIManager : MonoBehaviour
         // 3. 如果只是普通聊天框已开 -> ESC 关闭聊天框 (恢复移动)
         // 4. 如果都没开 -> ESC 打开暂停菜单
         // 5. 如果都没开 -> T 打开聊天框
+        // 6. 如果在关卡状态，屏蔽T键打开聊天框
 
         if (IsGamePaused)
         {
             if (Input.GetKeyDown(KeyCode.Escape)) TogglePauseMenu(false);
+        }
+        else if (IsInLevel)
+        {
+            if (Input.GetKeyDown(KeyCode.Escape)) TogglePauseMenu(true);
         }
         else if (IsAnySpecialPanelActive())
         {
@@ -501,6 +507,18 @@ public class TherapyUIManager : MonoBehaviour
         ShowChatUI();
         AddUserMessage($"好的，我试一试{level.title}");
         onAccept?.Invoke();
+    }
+
+    // --- Session 3: 设置是否处于关卡状态 ---
+    public void SetInLevel(bool inLevel)
+    {
+        IsInLevel = inLevel;
+        if (inLevel)
+        {
+            // 进入关卡时，自动关闭聊天和特殊面板，确保界面干净
+            SwitchToPanel(null);
+            SetChatActive(false);
+        }
     }
 
     // --- Session 3: 全部关卡列表 ---
