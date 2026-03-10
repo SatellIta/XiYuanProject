@@ -316,8 +316,11 @@ public class TherapyGameManager : MonoBehaviour
     private async Task ProcessAIResponse(AIResponse response)
     {
         string dialogue = string.IsNullOrEmpty(response.Dialogue) ? "..." : response.Dialogue;
-        await ui.AddAIMessageAynsc(dialogue);
         
+        Debug.Log("1");
+        
+        await ui.AddAIMessageAsync(dialogue);
+        Debug.Log("2");
         // [Session 1]
         if (response.IsProblemFound) 
         {

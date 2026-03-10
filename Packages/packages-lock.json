@@ -7,6 +7,13 @@
       "dependencies": {},
       "url": "https://packages.unity.cn"
     },
+    "com.cysharp.unitask": {
+      "version": "https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "a9e27c03d411d2fca01cc7410c24c97cd77cb539"
+    },
     "com.unity.adaptiveperformance": {
       "version": "5.1.6",
       "depth": 0,

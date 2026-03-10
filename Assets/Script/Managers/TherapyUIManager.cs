@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro; 
+using Cysharp.Threading.Tasks;
 
 public class TherapyUIManager : MonoBehaviour
 {   
@@ -89,7 +90,7 @@ public class TherapyUIManager : MonoBehaviour
     private GameObject currentTypingIndicator;
     private Coroutine subtitleCoroutine;      // 字幕协程
     private Coroutine notificationCoroutine;  // 提示信息协程
-    private TaskCompletionSource<bool> subtitleTcs; // 跟踪字幕是否播放完毕，避免意外
+    private bool isSubtitlePlaying = false;
     private bool isHistoryOpen = false;
     private bool isInputOpen = false;
     private bool canOpenInput = true;
@@ -124,28 +125,25 @@ public class TherapyUIManager : MonoBehaviour
         }
     }
 
-    public Task AddAIMessageAynsc(string text)
-    {
+    public async UniTask AddAIMessageAsync(string text) 
+    { 
         HideTyping(); 
         CreateBubble(aiBubblePrefab, text); 
 
         if (subtitlePanel != null && subtitleText != null)
         {
-            // 如果之前还有字幕没播完，强行打断它并完成上一个 Task
             if (subtitleCoroutine != null) 
             {
                 StopCoroutine(subtitleCoroutine);
-                subtitleTcs?.TrySetResult(true); 
             }
             
-            // 创建一个新的 Task，交给协程去完成
-            subtitleTcs = new TaskCompletionSource<bool>();
+            // 开启协程并标记状态
+            isSubtitlePlaying = true;
             subtitleCoroutine = StartCoroutine(PlaySubtitle(text));
-            return subtitleTcs.Task;
+            
+            // 直到播放完毕才停止协程和重置状态
+            await UniTask.WaitUntil(() => !isSubtitlePlaying);
         }
-
-        // 如果没有配置字幕 UI，直接瞬间返回完成
-        return Task.CompletedTask;
     }
 
     public void ShowTyping(bool show)
@@ -200,6 +198,7 @@ public class TherapyUIManager : MonoBehaviour
         // 停留一段时间后隐藏
         yield return new WaitForSeconds(subtitleStayTime);
         subtitlePanel.SetActive(false);
+        isSubtitlePlaying = false;
     }
 
     private void Start()
@@ -565,7 +564,7 @@ public class TherapyUIManager : MonoBehaviour
             inputField.caretPosition = inputField.text.Length;
         }
     }
-    
+
     // --- Session 3: 推荐关卡 ---
     public void ShowLevelRecommendation(LevelData level, Action onAccept, Action onShowAll, Action onRealWorld)
     {
