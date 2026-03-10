@@ -69,7 +69,7 @@ public class TherapyGameManager : MonoBehaviour
         catch (Exception e)
         {
             Debug.LogError($"[GameManager] 严重错误: {e.Message}\n{e.StackTrace}");
-            ui.AddAIMessage($"[系统错误] 游戏发生内部异常: {e.Message}");
+            ui.ShowNotification($"[系统错误] 游戏发生内部异常: {e.Message}", 3f);
         }
     }
 
@@ -131,13 +131,13 @@ public class TherapyGameManager : MonoBehaviour
                 else
                 {
                     Debug.LogError("[StartNewGame] /saves/new 返回空。");
-                    ui.AddAIMessage("[系统] 云端建档失败，将以离线模式运行。");
+                    ui.ShowNotification("[系统] 云端建档失败，将以离线模式运行。", 3f);
                 }
             }
             catch (Exception e)
             {
                 Debug.LogError($"[StartNewGame] 云端注册异常: {e.Message}");
-                ui.AddAIMessage("[系统] 无法连接云端，进入离线模式。");
+                ui.ShowNotification("[系统] 无法连接云端，进入离线模式。", 3f);
             }
         }
         else
@@ -160,7 +160,7 @@ public class TherapyGameManager : MonoBehaviour
 
         if (currentSaveData == null)
         {
-            ui.AddAIMessage("[系统] 存档文件读取失败，请检查本地文件。");
+            ui.ShowNotification("[系统] 存档文件读取失败，请检查本地文件。", 3f);
             return;
         }
         
@@ -170,7 +170,7 @@ public class TherapyGameManager : MonoBehaviour
         if (!syncSuccess)
         {
             Debug.LogWarning("[LoadGame] 云端同步失败");
-            ui.AddAIMessage("[系统] 云端同步失败，将以离线模式运行。");
+            ui.ShowNotification("[系统] 云端同步失败，将以离线模式运行。", 3f);
         }
 
         await InitChatSession();
@@ -221,13 +221,14 @@ public class TherapyGameManager : MonoBehaviour
     {
         if (currentSaveData == null || APIService.Instance == null) return;
 
-        // ★ 修复：这里按照你的要求，在收到回复后再显示 ChatUI
+        // 在收到回复后再显示 ChatUI
         // ui.ShowChatUI(); 
 
         var payload = new { chatId = currentSaveData.chatId };
         
         try 
         {
+            ui.ShowTyping(true);  // 先提示用户ai医生正在思考了
             var response = await APIService.Instance.PostAsync<AIResponse>("/chats/load", payload);
             
             if (response != null)
@@ -235,28 +236,29 @@ public class TherapyGameManager : MonoBehaviour
                 Debug.Log($"[InitChatSession] 收到回复: {response.Dialogue}");
                 RecordMessage("assistant", response.Dialogue); 
                 ui.ShowChatUI(); // 收到回复后显示界面
-                ProcessAIResponse(response);
+                ui.ShowNotification("请按'T'键输入消息，按'H'键可以查看对话记录", 3f);
+                await ProcessAIResponse(response);
             }
             else
             {
-                ui.AddAIMessage("[系统] 服务器未响应。");
+                ui.ShowNotification("[系统] 服务器未响应。", 3f);
                 ui.ShowChatUI(); // 即使出错也显示界面，让玩家能看到报错
             }
         }
         catch (Exception e)
         {
             Debug.LogError($"[InitChatSession] 请求出错: {e.Message}");
-            ui.AddAIMessage("[系统] 连接失败，请检查网络。");
+            ui.ShowNotification("[系统] 连接失败，请检查网络。", 3f);
             ui.ShowChatUI();
         }
     }
 
     // --- 核心对话循环 ---
     
-    // ★ 重载版本：用于 UI 事件绑定 (Action<string>)
+    // 重载版本：用于 UI 事件绑定 (Action<string>)
     public void OnUserSubmitText(string text) => OnUserSubmitText(text, true);
 
-    // ★ 完整版本：增加 showUiBubble 参数
+    // 完整版本：增加 showUiBubble 参数
     public async void OnUserSubmitText(string text, bool showUiBubble = true)
     {
         if (string.IsNullOrEmpty(text)) return;
@@ -285,12 +287,12 @@ public class TherapyGameManager : MonoBehaviour
             if(response != null) 
             {
                 RecordMessage("assistant", response.Dialogue);
-                ProcessAIResponse(response);
+                await ProcessAIResponse(response);
             }
             else 
             {
                 Debug.LogError("[Chat] 发送消息失败");
-                ui.AddAIMessage("[系统] 网络连接超时，请重试。");
+                ui.ShowNotification("[系统] 网络连接超时，请重试。", 3f);
                 ui.SetInputState(true);
             }
         }
@@ -298,7 +300,7 @@ public class TherapyGameManager : MonoBehaviour
         {
             ui.ShowTyping(false);
             Debug.LogError($"[Chat] 异常: {e.Message}");
-            ui.AddAIMessage("[系统] 发送失败。");
+            ui.ShowNotification("[系统] 发送失败。", 3f);
             ui.SetInputState(true);
         }
     }
@@ -311,10 +313,10 @@ public class TherapyGameManager : MonoBehaviour
     }
 
     // --- 处理 AI 响应 ---
-    private void ProcessAIResponse(AIResponse response)
+    private async Task ProcessAIResponse(AIResponse response)
     {
         string dialogue = string.IsNullOrEmpty(response.Dialogue) ? "..." : response.Dialogue;
-        ui.AddAIMessage(dialogue);
+        await ui.AddAIMessageAynsc(dialogue);
         
         // [Session 1]
         if (response.IsProblemFound) 
@@ -322,7 +324,7 @@ public class TherapyGameManager : MonoBehaviour
             ui.ShowProblemWindow(response.Problem, 
                 onConfirm: () => ConfirmStageLogic(problem: response.Problem),
                 
-                // ★ 关键修改：拒绝时，静默发送请求 (UI 已显示伪造气泡)
+                // 拒绝时，静默发送请求 (UI 已显示伪造气泡)
                 onReject: () => OnUserSubmitText("不，这描述得不对，请重新分析。", showUiBubble: false)
             );
             return;
@@ -402,7 +404,7 @@ public class TherapyGameManager : MonoBehaviour
         else
         {
             ui.ShowTyping(false); // 如果失败了手动关一下
-            ui.AddAIMessage("[系统] 状态同步失败。");
+            ui.ShowNotification("[系统] 状态同步失败。", 3f);
             ui.SetInputState(true);
         }
     }
@@ -424,7 +426,7 @@ public class TherapyGameManager : MonoBehaviour
             if(response != null) 
             {
                 RecordMessage("assistant", response.Dialogue);
-                ProcessAIResponse(response);
+                await ProcessAIResponse(response);
             }
         }
         catch (Exception e)
@@ -436,7 +438,7 @@ public class TherapyGameManager : MonoBehaviour
     // --- 退出逻辑 ---
     private async void ExitToRealWorld()
     {
-        ui.AddAIMessage("[系统] 正在保存进度，准备退出...");
+        ui.ShowNotification("[系统] 正在保存进度，准备退出...", 3f);
         await SaveCheckpoint(syncToCloud: true);
         Application.Quit();
 #if UNITY_EDITOR
@@ -539,7 +541,7 @@ public class TherapyGameManager : MonoBehaviour
         if (response != null)
         {
             RecordMessage("assistant", response.Dialogue);
-            ProcessAIResponse(response);
+            await ProcessAIResponse(response);
             await SaveCheckpoint(syncToCloud: true);
         }
         

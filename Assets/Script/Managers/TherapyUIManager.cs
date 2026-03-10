@@ -1,30 +1,46 @@
 using System;
 using System.Collections;
+using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro; 
 
 public class TherapyUIManager : MonoBehaviour
 {   
+    private static TherapyUIManager Instance;
+
     // ★ 全局静态开关：供角色控制脚本读取
-    public static bool IsChatActive { get; private set; } = false;
     public static bool IsGamePaused { get; private set; } = false;
     public static bool IsInLevel { get; private set;} = false;
+    // 动态计算是否有面板处于激活状态
+    public static bool IsChatActive => Instance != null &&
+        (Instance.isInputOpen || Instance.isHistoryOpen || Instance.IsAnySpecialPanelActive());
     [Header("暂停菜单")]
     [SerializeField] private GameObject pauseMenuPanel;
     [SerializeField] private Button resumeBtn;
     [SerializeField] private Button returnToMenuBtn;
-    [SerializeField] private Button quitWithoutSaveBtn; // ★ 新增：不保存直接退出
-    
-    [Header("核心容器")]
-    [SerializeField] private GameObject chatPanel;      // 主聊天面板，用于控制scrollRect和输入区显隐
-    [SerializeField] private ScrollRect scrollRect;      // 对应 ChatScrollView
+    [SerializeField] private Button quitWithoutSaveBtn; // ★ 新增：不保存直接退出     
+
+    [Header("对话记录")]
+    [SerializeField] private GameObject historyPanel;   // 对话历史面板
+    [SerializeField] private ScrollRect scrollRect;      // 之前的 ChatScrollView, 现在是历史菜单的子组件
     [SerializeField] private Transform chatContentParent; 
+
     
     [Header("输入区")]
     [SerializeField] private GameObject inputPanel;      // 输入区的父物体容器
     [SerializeField] private TMP_InputField inputField; 
     [SerializeField] private Button sendButton;
+
+    [Header("字幕系统")]
+    [SerializeField] private GameObject subtitlePanel;
+    [SerializeField] private TMP_Text subtitleText;
+    [SerializeField] private float typeSpeed = 0.03f;     // 打字速度
+    [SerializeField] private float subtitleStayTime = 3f; // 字幕停留时间
+
+    [Header("系统提示")]
+    [SerializeField] private GameObject notificationPanel;
+    [SerializeField] private TMP_Text notificationText;
 
     [Header("资源预制体")]
     [SerializeField] private ChatBubbleCell userBubblePrefab; 
@@ -60,42 +76,95 @@ public class TherapyUIManager : MonoBehaviour
     [SerializeField] private Button finishTherapyBtn;
 
     // 聊天界面按键配置
-    [SerializeField] private KeyCode openChatKey = KeyCode.T;
+    [SerializeField] private KeyCode openInputKey = KeyCode.T;
     [SerializeField] private KeyCode closeChatKey = KeyCode.Escape;
-
-    private GameObject currentTypingIndicator;
+    [SerializeField] private KeyCode openHistoryKey = KeyCode.H;
 
     // 事件回调
-    // 当用户点击发送或按回车时，触发此事件，把文字传出去
-    public Action<string> onUserSubmit; 
+    public Action<string> onUserSubmit; // 用户提交文本事件
     public Action onReturnToMenu; // 返回主菜单事件
-    public Action onQuitWithoutSave; // ★ 新增：不保存退出事件
+    public Action onQuitWithoutSave; // 不保存退出事件
+
+    // 内部状态
+    private GameObject currentTypingIndicator;
+    private Coroutine subtitleCoroutine;      // 字幕协程
+    private Coroutine notificationCoroutine;  // 提示信息协程
+    private TaskCompletionSource<bool> subtitleTcs; // 跟踪字幕是否播放完毕，避免意外
+    private bool isHistoryOpen = false;
+    private bool isInputOpen = false;
+    private bool canOpenInput = true;
 
     // 公共查询接口
-    public bool IsInChat() => chatPanel.activeSelf;
+    public bool IsInChat() => inputPanel.activeSelf;
 
-    // --- 1. 基础聊天功能 ---
+    private void Awake()
+    {
+        Instance = this;
+    }
+
+    // 消息添加，现在既要添加字幕，也要保存历史
+    // createBubble是在历史聊天记录面板中创建对话框
 
     public void AddUserMessage(string text)
     {
         CreateBubble(userBubblePrefab, text);
-        ClearInput();
+        // ClearInput();
     }
 
     public void AddAIMessage(string text)
     {
         HideTyping(); 
         CreateBubble(aiBubblePrefab, text);
+
+        // 触发滚动字幕
+        if (subtitlePanel != null && subtitleText != null)
+        {
+            if (subtitleCoroutine != null) StopCoroutine(subtitleCoroutine);
+            subtitleCoroutine = StartCoroutine(PlaySubtitle(text));
+        }
+    }
+
+    public Task AddAIMessageAynsc(string text)
+    {
+        HideTyping(); 
+        CreateBubble(aiBubblePrefab, text); 
+
+        if (subtitlePanel != null && subtitleText != null)
+        {
+            // 如果之前还有字幕没播完，强行打断它并完成上一个 Task
+            if (subtitleCoroutine != null) 
+            {
+                StopCoroutine(subtitleCoroutine);
+                subtitleTcs?.TrySetResult(true); 
+            }
+            
+            // 创建一个新的 Task，交给协程去完成
+            subtitleTcs = new TaskCompletionSource<bool>();
+            subtitleCoroutine = StartCoroutine(PlaySubtitle(text));
+            return subtitleTcs.Task;
+        }
+
+        // 如果没有配置字幕 UI，直接瞬间返回完成
+        return Task.CompletedTask;
     }
 
     public void ShowTyping(bool show)
     {
         if (show)
         {
+            // 历史记录显示输入状态
             if (currentTypingIndicator == null && typingIndicatorPrefab != null)
             {
                 currentTypingIndicator = Instantiate(typingIndicatorPrefab, chatContentParent);
                 ScrollToBottom();
+            }
+
+            // 在字幕区域显示思考中
+            if (subtitlePanel != null && subtitleText != null)
+            {
+                if (subtitleCoroutine != null) StopCoroutine(subtitleCoroutine);
+                subtitlePanel.SetActive(true);
+                subtitleText.text = "[AI医生正在分析思考中...]";
             }
         }
         else
@@ -103,6 +172,8 @@ public class TherapyUIManager : MonoBehaviour
             HideTyping();
         }
     }
+
+    // 打字效果
 
     private void HideTyping()
     {
@@ -113,10 +184,32 @@ public class TherapyUIManager : MonoBehaviour
         }
     }
 
+    // 打字机字幕系统
+    private IEnumerator PlaySubtitle(string text)
+    {
+        subtitlePanel.SetActive(true);
+        subtitleText.text = "";
+
+        // 逐字打印
+        foreach (char c in text)
+        {
+            subtitleText.text += c;
+            yield return new WaitForSeconds(typeSpeed);
+        }
+
+        // 停留一段时间后隐藏
+        yield return new WaitForSeconds(subtitleStayTime);
+        subtitlePanel.SetActive(false);
+    }
+
     private void Start()
     {
-        SetChatActive(false);
+        // 初始化隐藏所有 UI
+        ToggleHistory(false);
+        ToggleInput(false);
         TogglePauseMenu(false);
+        HideNotification();
+        if (subtitlePanel) subtitlePanel.SetActive(false);
 
         if (sendButton != null)
         {
@@ -139,57 +232,77 @@ public class TherapyUIManager : MonoBehaviour
         {
             returnToMenuBtn.onClick.RemoveAllListeners();
             returnToMenuBtn.onClick.AddListener(() => {
-                TogglePauseMenu(false); // 先关UI
-                // 显示鼠标
-                Cursor.lockState = CursorLockMode.None;
-                Cursor.visible = true;
-                onReturnToMenu?.Invoke(); // 通知 Manager 保存并退出
+                TogglePauseMenu(false); 
+                onReturnToMenu?.Invoke(); 
             });
         }
-        // ★ 新增：绑定直接退出按钮
         if (quitWithoutSaveBtn)
         {
             quitWithoutSaveBtn.onClick.RemoveAllListeners();
             quitWithoutSaveBtn.onClick.AddListener(() => {
                 TogglePauseMenu(false);
-                onQuitWithoutSave?.Invoke(); // 通知 Manager 直接退出
+                onQuitWithoutSave?.Invoke(); 
             });
         }
     }
 
     private void Update()
     {
-        // 逻辑优先级：
-        // 1. 如果暂停菜单已开 -> ESC 关闭暂停菜单 (恢复游戏)
-        // 2. 如果特殊交互面板已开 (Problem/Solution/Level) -> ESC 打开暂停菜单 (覆盖显示，不关闭原面板)
-        // 3. 如果只是普通聊天框已开 -> ESC 关闭聊天框 (恢复移动)
-        // 4. 如果都没开 -> ESC 打开暂停菜单
-        // 5. 如果都没开 -> T 打开聊天框
-        // 6. 如果在关卡状态，屏蔽T键打开聊天框
-
+        // 1. 最高优先级拦截 - 暂停菜单控制
         if (IsGamePaused)
         {
             if (Input.GetKeyDown(KeyCode.Escape)) TogglePauseMenu(false);
+            return; 
         }
-        else if (IsInLevel)
+
+        // 2. 关卡模式拦截 - 屏蔽所有交互快捷键
+        if (IsInLevel)
         {
             if (Input.GetKeyDown(KeyCode.Escape)) TogglePauseMenu(true);
+            return; 
         }
-        else if (IsAnySpecialPanelActive())
+
+        // 3. 特殊交互面板打开时 (问题/方案/选关)
+        if (IsAnySpecialPanelActive())
         {
-            // 特殊状态下，ESC 呼出暂停菜单，而不是关闭面板
             if (Input.GetKeyDown(KeyCode.Escape)) TogglePauseMenu(true);
+            return;
         }
-        else if (IsChatActive)
+
+        // 以下是正常的探索状态 (可以开历史、开输入、开菜单)
+        
+        // 处理 ESC 关闭逻辑
+        if (Input.GetKeyDown(KeyCode.Escape))
         {
-            // 普通聊天状态下，ESC 关闭聊天
-            if (Input.GetKeyDown(closeChatKey)) SetChatActive(false);
+            if (isInputOpen) ToggleInput(false);
+            else if (isHistoryOpen) ToggleHistory(false);
+            else TogglePauseMenu(true);
+            return;
         }
-        else
+
+        // 处理 H 键 (历史记录)
+        if (Input.GetKeyDown(openHistoryKey) && !isInputOpen)
         {
-            // 漫游状态
-            if (Input.GetKeyDown(KeyCode.Escape)) TogglePauseMenu(true);
-            if (Input.GetKeyDown(openChatKey)) SetChatActive(true);
+            ToggleHistory(!isHistoryOpen);
+        }
+
+        // 处理 T 键 (小型输入框)
+        if (Input.GetKeyDown(openInputKey) && !isHistoryOpen && !isInputOpen && canOpenInput)
+        {
+            ToggleInput(!isInputOpen);
+        }
+
+        // Viewport 自动修复
+        if (scrollRect != null && scrollRect.gameObject.activeInHierarchy)
+        {
+            RectTransform viewport = scrollRect.viewport;
+            if (viewport != null && viewport.rect.height < 1f) 
+            {
+                viewport.anchorMin = Vector2.zero;
+                viewport.anchorMax = Vector2.one;
+                viewport.sizeDelta = Vector2.zero;
+                viewport.anchoredPosition = Vector2.zero;
+            }
         }
     }
 
@@ -202,9 +315,8 @@ public class TherapyUIManager : MonoBehaviour
         onUserSubmit?.Invoke(text);
         ClearInput();
         
-        // 发送完后保持开启还是关闭？
-        // 通常保持开启方便连续对话。如果想发完即走，这里调 SetChatActive(false);
-        inputField.ActivateInputField(); 
+        // 发送完后关闭面板
+        ToggleInput(false);
     }
 
     // --- 修改生成气泡的逻辑 (修复排版和缩放) ---
@@ -213,7 +325,7 @@ public class TherapyUIManager : MonoBehaviour
         // 1. 生成 (作为 chatContentParent 的子物体)
         ChatBubbleCell cell = Instantiate(prefab, chatContentParent);
         
-        // 2. ★ 关键修复：重置缩放和位置
+        // 2. 重置缩放和位置
         cell.transform.localScale = Vector3.one; 
         
         // 3. 确保物体激活
@@ -242,9 +354,9 @@ public class TherapyUIManager : MonoBehaviour
     }
 
     // --- 交互控制 ---
-
     public void SetInputState(bool interactable)
     {
+        canOpenInput = interactable;
         if(inputField) inputField.interactable = interactable;
         if(sendButton) sendButton.interactable = interactable;
         
@@ -266,7 +378,24 @@ public class TherapyUIManager : MonoBehaviour
                (levelSelectionPanel != null && levelSelectionPanel.activeSelf);
     }
 
-    // --- 暂停菜单控制 ---
+    // 辅助方法，统一的状态更新与鼠标状态更新
+    private void UpdateStateAndCursor()
+    {
+        bool needsCursor = IsGamePaused || isHistoryOpen || isInputOpen || IsAnySpecialPanelActive();
+        if (needsCursor)
+        {
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
+        }
+        else
+        {
+            Cursor.lockState = CursorLockMode.Locked;
+            Cursor.visible = false;
+        }
+    }
+
+    // 各种菜单控制
+    // 暂停菜单
     public void TogglePauseMenu(bool show)
     {
         IsGamePaused = show;
@@ -279,22 +408,32 @@ public class TherapyUIManager : MonoBehaviour
 
         // 暂停/恢复 游戏时间
         Time.timeScale = show ? 0f : 1f;
+        UpdateStateAndCursor();
+    }
 
-        // 鼠标控制
-        if (show)
+    // 对话记录菜单
+    public void ToggleHistory(bool show)
+    {
+        isHistoryOpen = show;
+        if (historyPanel != null)
         {
-            Cursor.lockState = CursorLockMode.None;
-            Cursor.visible = true;
+            historyPanel.SetActive(show);
+            if (show) historyPanel.transform.SetAsLastSibling();
         }
-        else
+        UpdateStateAndCursor();
+    }
+
+    // 输入菜单
+    public void ToggleInput(bool show)
+    {
+        isInputOpen = show;
+        if (inputPanel != null)
         {
-            // 恢复时，如果不在聊天界面，则锁定鼠标
-            if (!IsChatActive)
-            {
-                Cursor.lockState = CursorLockMode.Locked;
-                Cursor.visible = false;
-            }
+            inputPanel.SetActive(show);
+            if (show && inputField != null) inputField.ActivateInputField();
+            else if (!show && inputField != null) inputField.DeactivateInputField();
         }
+        UpdateStateAndCursor();
     }
 
     // 互斥面板切换器
@@ -302,57 +441,27 @@ public class TherapyUIManager : MonoBehaviour
     private void SwitchToPanel(GameObject targetPanel)
     {
         // 1. 先关掉所有
-        if (chatPanel) chatPanel.SetActive(false);
         if (problemPanel) problemPanel.SetActive(false);
         if (solutionPanel) solutionPanel.SetActive(false);
+        if (subtitlePanel) subtitlePanel.SetActive(false);
         if (levelRecommendPanel) levelRecommendPanel.SetActive(false);
         if (levelSelectionPanel) levelSelectionPanel.SetActive(false);
 
         // 2. 再打开目标
         if (targetPanel) 
         {   
-            // 打开聊天：解锁鼠标
-            Cursor.lockState = CursorLockMode.None;
-            Cursor.visible = true;
             targetPanel.SetActive(true);
             targetPanel.transform.SetAsLastSibling(); // 依然保持置顶习惯，防止背景遮挡
         }
-    }
-
-    public void SetChatActive(bool isActive)
-    {
-        IsChatActive = isActive;
-
-        if (isActive)
-        {
-            SwitchToPanel(chatPanel); // 显示主聊天面板
-            Cursor.lockState = CursorLockMode.None;
-            Cursor.visible = true;
-            
-            if (inputField != null) inputField.ActivateInputField();
-            
-            // 确保子组件显示
-            if (inputPanel) inputPanel.SetActive(true);
-            if (scrollRect) scrollRect.gameObject.SetActive(true);
-        }
-        else
-        {
-            // 关闭所有面板
-            SwitchToPanel(null); 
-            Cursor.lockState = CursorLockMode.Locked;
-            Cursor.visible = false;
-            if (inputField != null) inputField.DeactivateInputField();
-        }
+        UpdateStateAndCursor();
     }
 
     public void ShowChatUI()
     {
-        SetChatActive(true);
-        if (finishTherapyBtn != null)
-        {
-            finishTherapyBtn.gameObject.SetActive(true);
-            finishTherapyBtn.transform.SetAsLastSibling();
-        }
+        // 之前是显示聊天面板，现在重构后，这个函数变成切回正常游戏状态的函数
+        // 也就是关闭所有特殊面板
+        SwitchToPanel(null);
+        UpdateStateAndCursor();
     }
 
     // --- Session 1: 问题确认 ---
@@ -360,13 +469,11 @@ public class TherapyUIManager : MonoBehaviour
     {
         if(problemPanel == null) return;
 
-        // ★ 切换 UI：显示问题，隐藏聊天
+        
+        // 切换 UI：显示问题，隐藏聊天
         SwitchToPanel(problemPanel);
         
-        // 强制解锁鼠标 (防止从非聊天状态直接跳过来)
-        Cursor.lockState = CursorLockMode.None;
-        Cursor.visible = true;
-        IsChatActive = true; // 视为交互中，暂停角色移动
+        UpdateStateAndCursor();
 
         if(problemContentText != null) problemContentText.text = problem; 
 
@@ -398,11 +505,9 @@ public class TherapyUIManager : MonoBehaviour
     {
         if(solutionPanel == null) return;
 
-        // ★ 切换 UI
+        // 切换 UI
         SwitchToPanel(solutionPanel);
-        Cursor.lockState = CursorLockMode.None;
-        Cursor.visible = true;
-        IsChatActive = true;
+        UpdateStateAndCursor();
         
         if(solutionAText) solutionAText.text = solA; 
         if(solutionBText) solutionBText.text = solB; 
@@ -434,17 +539,18 @@ public class TherapyUIManager : MonoBehaviour
                 // 1. 切回聊天界面
                 ShowChatUI();
                 
-                // 2. ★ 关键修改：将预设文本填入输入框，等待用户补充
+                // 2. 关键修改：将预设文本填入输入框，等待用户补充
+                ToggleInput(true); // 打开输入框, 这次重构新增
                 if (inputField != null)
                 {
                     inputField.text = "这些方案我都不太满意，我想再讨论一下，"; // 加逗号引导
                     inputField.ActivateInputField();
                     
-                    // 启动协程将光标移到末尾 (需要等待一帧)
+                    // 启动协程将光标移到末尾
                     StartCoroutine(MoveCaretToEnd());
                 }
                 
-                // 3. 调用回调 (Manager层对应传入空操作即可，因为现在不发请求了)
+                // 3. 调用回调
                 onContinue?.Invoke();
             });
         }
@@ -465,11 +571,9 @@ public class TherapyUIManager : MonoBehaviour
     {
         if(levelRecommendPanel == null) return;
 
-        // ★ 切换 UI
+        // 切换 UI
         SwitchToPanel(levelRecommendPanel);
-        Cursor.lockState = CursorLockMode.None;
-        Cursor.visible = true;
-        IsChatActive = true;
+        UpdateStateAndCursor();
 
         foreach (Transform child in recommendCardContainer) Destroy(child.gameObject);
 
@@ -517,8 +621,11 @@ public class TherapyUIManager : MonoBehaviour
         {
             // 进入关卡时，自动关闭聊天和特殊面板，确保界面干净
             SwitchToPanel(null);
-            SetChatActive(false);
+            ToggleHistory(false);
+            ToggleInput(false);
+            if (subtitlePanel) subtitlePanel.SetActive(false);
         }
+        UpdateStateAndCursor();
     }
 
     // --- Session 3: 全部关卡列表 ---
@@ -528,9 +635,7 @@ public class TherapyUIManager : MonoBehaviour
 
         // ★ 切换 UI
         SwitchToPanel(levelSelectionPanel);
-        Cursor.lockState = CursorLockMode.None;
-        Cursor.visible = true;
-        IsChatActive = true;
+        UpdateStateAndCursor();
 
         foreach (Transform child in levelGridContent) Destroy(child.gameObject);
 
@@ -564,4 +669,46 @@ public class TherapyUIManager : MonoBehaviour
             finishTherapyBtn.onClick.AddListener(() => onFinish?.Invoke());
         }
     }
+
+    // 系统提示系统
+    // 输入文本和显示时长，自动在界面上显示一定时长的提示
+    public void ShowNotification(string message, float duration)
+    {
+        if (notificationPanel == null || notificationText == null)
+        {
+            Debug.LogWarning("[TherapyUIManager] Notification UI 未分配，无法显示: " + message);
+            return;
+        }
+
+        // 如果当前已有通知在显示，打断它，显示新的
+        if (notificationCoroutine != null)
+        {
+            StopCoroutine(notificationCoroutine);
+        }
+        
+        notificationCoroutine = StartCoroutine(DisplayNotificationCoroutine(message, duration));
+    }
+
+    // 立即隐藏当前提示，用于内部方法
+    private void HideNotification()
+    {
+        if (notificationPanel != null)
+        {
+            notificationPanel.SetActive(false);
+        }
+        notificationCoroutine = null;
+    }
+
+    private IEnumerator DisplayNotificationCoroutine(string message, float duration)
+    {
+        notificationText.text = message;
+        notificationPanel.SetActive(true);
+        notificationPanel.transform.SetAsLastSibling(); // 保证显示在最前面
+        
+        yield return new WaitForSeconds(duration);
+        
+        notificationPanel.SetActive(false);
+        notificationCoroutine = null;
+    }
+
 }
