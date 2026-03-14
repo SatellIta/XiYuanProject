@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class MediationGuideTrigger : MonoBehaviour
 {
-    public AIChatManager aiChatManager;
+    public TherapyUIManager UIManager;
     private AudioSource meditationAudioSource;
     private bool hasPlayed = false;
 
@@ -21,12 +21,12 @@ public class MediationGuideTrigger : MonoBehaviour
         {
             Debug.LogWarning("玩家触发");
             // 确保有引用并且不为空
-            if (aiChatManager != null)
+            if (UIManager != null)
             {
                 // 调用目标脚本中的公共函数
                 Debug.LogWarning("函数即将被调用");
-                aiChatManager.TypeSubtitle("欢迎来到冥想房间,请你跟着舒缓的音乐，关注呼吸，平静心灵吧",
-                    PlayMeditationMusic);
+                UIManager.AddAIMessageAsync("欢迎来到冥想房间,请你跟着舒缓的音乐，关注呼吸，平静心灵吧。你可以按前方墙上的按钮退出");
+                PlayMeditationMusic();
                 hasPlayed = true;
                 Debug.LogWarning("函数调用完毕");
             }

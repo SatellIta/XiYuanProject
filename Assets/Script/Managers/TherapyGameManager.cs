@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using System.Threading.Tasks;
 using System;
 using System.Collections.Generic;
@@ -12,6 +12,7 @@ public class TherapyGameManager : MonoBehaviour
 
     [Header("依赖")]
     [SerializeField] private TherapyUIManager ui;
+    [SerializeField] private TherapyLevelManager levelManager;
 
     // 运行时状态
     private SaveDataDTO currentSaveData;
@@ -450,7 +451,7 @@ public class TherapyGameManager : MonoBehaviour
     }
 
     // 保存并返回主菜单逻辑
-    private async void ReturnToMainMenu()
+    public async void ReturnToMainMenu()
     {
         Debug.Log("[GameManager] 正在保存并返回主菜单...");
         
@@ -519,11 +520,7 @@ public class TherapyGameManager : MonoBehaviour
     // 调用 TherapyLevelManager 来运行关卡，并等待结果
     private async Task<bool> RunLevel(TherapyLevelID levelId)
     {
-        Debug.Log($"正在等待玩家前往 '{levelId}' 关卡场景并完成挑战...");
-
-        await Task.Delay(10000); // 模拟等待玩家完成关卡
-
-        // return await TherapyLevelManager.Instance.RunLevel(levelId);
+        levelManager.showGuideTowardsLevel(levelId);
         return true;
     }
 
