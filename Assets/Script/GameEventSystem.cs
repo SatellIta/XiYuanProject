@@ -60,7 +60,7 @@ public class GameEventSystem : MonoBehaviour
     {
         if (therapyGameManager != null)
         {
-            return therapyGameManager.IsGameStarted();
+            return TherapyGameManager.IsGameStarted;
         }
         Debug.LogWarning("尝试查询游戏开始状态，但 TherapyGameManager 未设置。");
         return false;

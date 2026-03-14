@@ -8,11 +8,11 @@ using Cysharp.Threading.Tasks;
 
 public class TherapyUIManager : MonoBehaviour
 {   
-    private static TherapyUIManager Instance;
+    public static TherapyUIManager Instance;
 
     // 全局静态开关：供角色控制脚本读取
     public static bool IsGamePaused { get; private set; } = false;
-    public static bool IsInLevel { get; private set;} = false;
+    public static bool IsInLevel { get; private set; } = false;
     // 动态计算是否有面板处于激活状态
     public static bool IsChatActive => Instance != null &&
         (Instance.isInputOpen || Instance.isHistoryOpen || Instance.IsAnySpecialPanelActive());
@@ -24,13 +24,14 @@ public class TherapyUIManager : MonoBehaviour
 
     [Header("对话记录")]
     [SerializeField] private GameObject historyPanel;   // 对话历史面板
-    [SerializeField] private ScrollRect scrollRect;      // 之前的 ChatScrollView, 现在是历史菜单的子组件
+    [SerializeField] private ScrollRect historyScrollRect;      // 之前的 ChatScrollView, 现在是历史菜单的子组件
     [SerializeField] private Transform chatContentParent; 
 
     [Header("心理量表")]
     [SerializeField] private GameObject scalePanel;
     [SerializeField] private Button submitScaleBtn;
     [SerializeField] private SubmitScript scaleSubmit;     // 拖 SubmitScript 脚本，负责处理量表提交逻辑
+    [SerializeField] private ScrollRect scaleScrollRect;
     
     [Header("输入区")]
     [SerializeField] private GameObject inputPanel;      // 输入区的父物体容器
@@ -249,23 +250,30 @@ public class TherapyUIManager : MonoBehaviour
         }
     }
 
-    private void Update()
+    private async void Update()
     {
-        // 1. 最高优先级拦截 - 暂停菜单控制
+        // 最高优先级拦截 - 暂停菜单控制
         if (IsGamePaused)
         {
             if (Input.GetKeyDown(KeyCode.Escape)) TogglePauseMenu(false);
             return; 
         }
 
-        // 2. 关卡模式拦截 - 屏蔽所有交互快捷键
+        // 如果游戏还没正式开始，除了退出面板之外都不能打开
+        if (!TherapyGameManager.IsGameStarted)
+        {
+            if (Input.GetKeyDown(KeyCode.Escape)) TogglePauseMenu(true);
+            return;
+        }
+
+        // 关卡模式拦截 - 屏蔽所有交互快捷键
         if (IsInLevel)
         {
             if (Input.GetKeyDown(KeyCode.Escape)) TogglePauseMenu(true);
             return; 
         }
 
-        // 3. 特殊交互面板打开时 (问题/方案/选关)
+        // 特殊交互面板打开时 (问题/方案/选关)
         if (IsAnySpecialPanelActive())
         {
             if (Input.GetKeyDown(KeyCode.Escape)) TogglePauseMenu(true);
@@ -278,7 +286,7 @@ public class TherapyUIManager : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.Escape))
         {
             if (isInputOpen) ToggleInput(false);
-            else if (isHistoryOpen) ToggleHistory(false);
+            else if (isHistoryOpen) await ToggleHistory(false);
             else TogglePauseMenu(true);
             return;
         }
@@ -286,26 +294,13 @@ public class TherapyUIManager : MonoBehaviour
         // 处理 H 键 (历史记录)
         if (Input.GetKeyDown(openHistoryKey) && !isInputOpen)
         {
-            ToggleHistory(!isHistoryOpen);
+            await ToggleHistory(!isHistoryOpen);
         }
 
         // 处理 T 键 (小型输入框)
         if (Input.GetKeyDown(openInputKey) && !isHistoryOpen && !isInputOpen && canOpenInput)
         {
             ToggleInput(!isInputOpen);
-        }
-
-        // Viewport 自动修复
-        if (scrollRect != null && scrollRect.gameObject.activeInHierarchy)
-        {
-            RectTransform viewport = scrollRect.viewport;
-            if (viewport != null && viewport.rect.height < 1f) 
-            {
-                viewport.anchorMin = Vector2.zero;
-                viewport.anchorMax = Vector2.one;
-                viewport.sizeDelta = Vector2.zero;
-                viewport.anchoredPosition = Vector2.zero;
-            }
         }
     }
 
@@ -353,7 +348,7 @@ public class TherapyUIManager : MonoBehaviour
     private IEnumerator ScrollCoroutine()
     {
         yield return null; 
-        if(scrollRect) scrollRect.verticalNormalizedPosition = 0f; 
+        if(historyScrollRect) historyScrollRect.verticalNormalizedPosition = 0f; 
     }
 
     // --- 交互控制 ---
@@ -432,13 +427,18 @@ public class TherapyUIManager : MonoBehaviour
     }
 
     // 对话记录菜单
-    public void ToggleHistory(bool show)
+    public async Task ToggleHistory(bool show)
     {
         isHistoryOpen = show;
         if (historyPanel != null)
         {
             historyPanel.SetActive(show);
-            if (show) historyPanel.transform.SetAsLastSibling();
+            if (show)
+            {
+                historyPanel.transform.SetAsLastSibling();
+                await UniTask.Yield();
+                if (historyScrollRect != null) historyScrollRect.verticalNormalizedPosition = 0f;
+            }
         }
         UpdateStateAndCursor();
     }
@@ -738,7 +738,10 @@ public class TherapyUIManager : MonoBehaviour
         if (scalePanel != null)
         {
             scalePanel.SetActive(show);
-            if (show) scalePanel.transform.SetAsLastSibling();
+            if (show)
+            { 
+                scalePanel.transform.SetAsLastSibling();
+            }
         }
         UpdateStateAndCursor();
     } 
@@ -747,10 +750,11 @@ public class TherapyUIManager : MonoBehaviour
     {
         ToggleScalePanel(true);
         Canvas.ForceUpdateCanvases();
-        var scrollRectComponent = scrollRect.GetComponent<ScrollRect>();
-        if (scrollRectComponent != null)
+
+        if (scaleScrollRect != null) // 滚到最顶部
         {
-            scrollRectComponent.verticalNormalizedPosition = 1f;
+            await UniTask.Yield(); // 等待一帧，确保 UI 刷新完成
+            scaleScrollRect.verticalNormalizedPosition = 1f;
         }
         // 绑定提交按钮
         submitScaleBtn.onClick.RemoveAllListeners();

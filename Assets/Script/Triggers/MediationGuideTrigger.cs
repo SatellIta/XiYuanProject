@@ -25,7 +25,14 @@ public class MediationGuideTrigger : MonoBehaviour
             {
                 // 调用目标脚本中的公共函数
                 Debug.LogWarning("函数即将被调用");
-                UIManager.AddAIMessageAsync("欢迎来到冥想房间,请你跟着舒缓的音乐，关注呼吸，平静心灵吧。你可以按前方墙上的按钮退出");
+                if (!hasPlayed) 
+                {
+                    UIManager.ShowNotification("欢迎来到冥想房间,请你跟着舒缓的音乐，关注呼吸，平静心灵吧。你可以按前方墙上的按钮退出", 5f);
+                }
+                else
+                {
+                    UIManager.ShowNotification("欢迎回来，继续享受冥想吧！", 3f);
+                }
                 PlayMeditationMusic();
                 hasPlayed = true;
                 Debug.LogWarning("函数调用完毕");
@@ -37,13 +44,33 @@ public class MediationGuideTrigger : MonoBehaviour
         }
     }
 
+    // 离开房间停止播放音乐
+    private void OnTriggerExit(Collider other)
+    {
+        if (other.CompareTag("Player"))
+        {
+            if (meditationAudioSource != null && meditationAudioSource.isPlaying)
+            {
+                UIManager.ShowNotification("你可以随时回来继续冥想！", 3f);
+                meditationAudioSource.Pause();
+            }
+        }
+    }
+
     private void PlayMeditationMusic()
     {
-        if (meditationAudioSource != null && (!hasPlayed))
+        if (meditationAudioSource != null)
         {
-            meditationAudioSource.Play();
+            if (!hasPlayed)
+            {
+                meditationAudioSource.Play();
+            }
+            else 
+            {
+                meditationAudioSource.UnPause();
+            }
         }
-        else
+        else 
         {
             Debug.LogWarning("未设置音乐文件或AudioSource组件");
         }

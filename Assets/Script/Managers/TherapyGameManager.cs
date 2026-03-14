@@ -3,7 +3,8 @@ using System.Threading.Tasks;
 using System;
 using System.Collections.Generic;
 using UnityEngine.SceneManagement; // 需要场景管理
-using Cysharp.Threading.Tasks; // UniTask
+using Cysharp.Threading.Tasks;
+using Unity.VisualScripting; // UniTask
 
 public class TherapyGameManager : MonoBehaviour
 {
@@ -17,11 +18,7 @@ public class TherapyGameManager : MonoBehaviour
 
     // 运行时状态
     private SaveDataDTO currentSaveData;
-    private bool isGameStarted = false; 
-
-    // 公共接口，用于其他脚本查询游戏状态
-    public bool IsGameStarted() => isGameStarted;
-    public bool IsInChat() => ui.IsInChat();
+    public static bool IsGameStarted = false; 
 
     private async void Start()
     {
@@ -52,7 +49,7 @@ public class TherapyGameManager : MonoBehaviour
 
     public void ActivateGameSystem()
     {
-        if (isGameStarted) return;
+        if (IsGameStarted) return;
 
         if (GameLaunchConfig.IsNewGame)
         {
@@ -90,7 +87,7 @@ public class TherapyGameManager : MonoBehaviour
     // --- 逻辑 A: 新游戏 ---
     private async Task StartNewGameLogic()
     {
-        isGameStarted = true;
+        IsGameStarted = true;
         ui.CloseAllMenus();
 
         // 添加心理量表作为游戏开场
@@ -185,7 +182,7 @@ public class TherapyGameManager : MonoBehaviour
     // --- 逻辑 B: 加载游戏 ---
     private async Task LoadGameLogic(string fileName)
     {
-        isGameStarted = true;
+        IsGameStarted = true;
         Debug.Log($"[LoadGame] 加载存档: {fileName}");
         
         currentSaveData = LocalSaveSystem.LoadFromDisk(fileName);
@@ -428,7 +425,7 @@ public class TherapyGameManager : MonoBehaviour
 
             await SaveCheckpoint(syncToCloud: true);
             
-            // ★ 新增：保存成功后，立即触发下一阶段的对话
+            // 保存成功后，立即触发下一阶段的对话
             await TriggerNextStage();
             
             ui.SetInputState(true); 

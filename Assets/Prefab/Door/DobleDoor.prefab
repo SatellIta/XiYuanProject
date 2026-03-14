@@ -138,8 +138,8 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 8592337380472700268}
+  - {fileID: 8502576630449924052}
   - {fileID: 7356439559000244546}
-  - {fileID: 5392766448539117834}
   - {fileID: 3175716929273994933}
   - {fileID: 6074375669914504771}
   m_Father: {fileID: 0}
@@ -156,7 +156,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1e0c47a5d6ff1fb429b91e6035b92434, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  doorAnimator: {fileID: 1841171451891778597}
+  doorAnimator: {fileID: 1422483530499061206}
   openSound: {fileID: 8300000, guid: cd92e1d30dd0b3b4bb52af222dc0670d, type: 3}
   closeSound: {fileID: 8300000, guid: 343e30318c2af674ead037b07980b94a, type: 3}
   lockedSound: {fileID: 8300000, guid: 5a52095020dc2884d9edbeefe287db81, type: 3}
@@ -480,7 +480,6 @@ GameObject:
   - component: {fileID: 5392766448539117834}
   - component: {fileID: 9037215418070236607}
   - component: {fileID: 3643325040025685917}
-  - component: {fileID: 1841171451891778597}
   - component: {fileID: 2236823017071613409}
   m_Layer: 6
   m_Name: BigDoor
@@ -498,11 +497,11 @@ Transform:
   m_GameObject: {fileID: 5401240729756715526}
   serializedVersion: 2
   m_LocalRotation: {x: -0.7071068, y: -0, z: -0, w: 0.7071067}
-  m_LocalPosition: {x: -1.3491, y: 15.6105, z: 0.033616543}
-  m_LocalScale: {x: 6.378783, y: 69.999725, z: 176.04185}
+  m_LocalPosition: {x: -0.024098635, y: 15.610496, z: 0.033615112}
+  m_LocalScale: {x: 6.378783, y: 69.9997, z: 176.04185}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 9114992070020881842}
+  m_Father: {fileID: 8502576630449924052}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!33 &9037215418070236607
 MeshFilter:
@@ -556,27 +555,6 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!95 &1841171451891778597
-Animator:
-  serializedVersion: 5
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5401240729756715526}
-  m_Enabled: 1
-  m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 9100000, guid: b695e77fadf2c7146abeb3d326b17440, type: 2}
-  m_CullingMode: 0
-  m_UpdateMode: 0
-  m_ApplyRootMotion: 0
-  m_LinearVelocityBlending: 0
-  m_StabilizeFeet: 0
-  m_WarningMessage: 
-  m_HasTransformHierarchy: 1
-  m_AllowConstantClipSamplingOptimization: 1
-  m_KeepAnimatorStateOnDisable: 0
-  m_WriteDefaultValuesOnDisable: 0
 --- !u!64 &2236823017071613409
 MeshCollider:
   m_ObjectHideFlags: 0
@@ -704,3 +682,57 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 1, y: 1, z: 1}
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!1 &9003338474642474268
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8502576630449924052}
+  - component: {fileID: 1422483530499061206}
+  m_Layer: 6
+  m_Name: Pivot
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8502576630449924052
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9003338474642474268}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -1.325, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 5392766448539117834}
+  m_Father: {fileID: 9114992070020881842}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!95 &1422483530499061206
+Animator:
+  serializedVersion: 5
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9003338474642474268}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: b695e77fadf2c7146abeb3d326b17440, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
