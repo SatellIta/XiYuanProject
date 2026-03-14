@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using System;
 using System.Collections.Generic;
 using UnityEngine.SceneManagement; // 需要场景管理
+using Cysharp.Threading.Tasks; // UniTask
 
 public class TherapyGameManager : MonoBehaviour
 {
@@ -89,8 +90,38 @@ public class TherapyGameManager : MonoBehaviour
     private async Task StartNewGameLogic()
     {
         isGameStarted = true;
+        ui.CloseAllMenus();
 
-        // 1. 生成 ID
+        // 添加心理量表作为游戏开场
+        await ui.AddAIMessageAsync("欢迎来到聊愈！请先完成心理量表，帮助我们更好地了解你的状态！");
+        var (score, level) = await ui.ShowAndAwaitScaleAsync();
+
+        // 记录量表结果到历史
+        string scaleResultMsg = $"[系统] 玩家完成了初始测试，得分为 {score} ({level})。";
+        Debug.Log(scaleResultMsg);
+
+        // 如果分数大于 16，触发红线中止机制
+        if (score > 16)
+        {
+            string warningMsg = $"你的测试得分为 {score}分 ({level})。\n为了您的健康安全，系统强烈建议您暂时停止游戏，并立即寻求现实中的专业心理援助或联系心理医生。本次游戏将中止，请保重！";
+            ui.ShowNotification(warningMsg, 10f);
+            
+            // 停留 10 秒让玩家看清字幕，然后强制退回主菜单
+            await Task.Delay(10000);
+            ReturnToMainMenu();
+            return; //绝对终止后续流程，建档和聊天都不会发生了
+        }
+        else
+        {
+            // 分数正常（良好或一般），给予提示后继续游戏
+            string welcomeMsg = score <= 8 
+                ? $"你的测试得分为 {score}分 ({level})，看起来你现在的状态非常棒！准备好开始今天的探索了吗？"
+                : $"你的测试得分为 {score}分 ({level})，状态还不错。请多关注自己的情绪变化，如果需要帮助，请立即联系现实中的专业人士！那让我们开始吧。";
+            
+            await ui.AddAIMessageAsync(welcomeMsg);
+        }
+
+        // 生成 ID
         string timeStr = GetFormattedTimeString();
         string deviceName = SystemInfo.deviceName; 
         deviceName = System.Text.RegularExpressions.Regex.Replace(deviceName, "[^a-zA-Z0-9_\\-]", "");
@@ -100,7 +131,7 @@ public class TherapyGameManager : MonoBehaviour
 
         Debug.Log($"[StartNewGame] 创建新会话 ID: {newChatId}");
 
-        // 2. 初始化本地数据
+        // 初始化本地数据
         currentSaveData = new SaveDataDTO
         {
             chatId = newChatId,
@@ -109,11 +140,11 @@ public class TherapyGameManager : MonoBehaviour
             inChat = true
         };
 
-        // 3. 先保存到本地 (Checkpoint)
+        // 保存到本地 
         await SaveCheckpoint(fileName, syncToCloud: false);
         PlayerPrefs.SetString(PREFS_LAST_SAVE_FILE, fileName);
 
-        // 4. 向云端注册
+        // 向云端注册
         if (APIService.Instance != null)
         {
             Debug.Log("[StartNewGame] 正在向云端注册新存档 (/saves/new)...");
@@ -145,7 +176,7 @@ public class TherapyGameManager : MonoBehaviour
             Debug.LogError("[StartNewGame] APIService 未初始化！");
         }
 
-        // 5. 请求开场白
+        // 请求开场白
         Debug.Log("[StartNewGame] 正在请求 AI 开场白 (/chats/load)...");
         await InitChatSession();
     }
@@ -317,10 +348,7 @@ public class TherapyGameManager : MonoBehaviour
     {
         string dialogue = string.IsNullOrEmpty(response.Dialogue) ? "..." : response.Dialogue;
         
-        Debug.Log("1");
-        
         await ui.AddAIMessageAsync(dialogue);
-        Debug.Log("2");
         // [Session 1]
         if (response.IsProblemFound) 
         {
