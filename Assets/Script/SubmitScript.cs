@@ -2,35 +2,36 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using Cysharp.Threading.Tasks;
 
 public class SubmitScript : MonoBehaviour
 {
-    // ① 在 Inspector 把 8 个 ToggleGroup 拖进来
+    // 在 Inspector 把 8 个 ToggleGroup 拖进来
     [SerializeField] private ToggleGroup[] toggleGroups;
 
-    // ② 拖量表面板（PsychScalePanel）
+    // 拖量表面板（PsychScalePanel）
     [SerializeField] private GameObject scalePanel;
 
-    // ③ 拖 AIChatManager（挂有 ShowScaleResult 的脚本）
-    [SerializeField] private AIChatManager chatMgr;
-
-    // ④ 拖自己的按钮（可选，方便清事件）
+    // 拖自己的按钮（可选，方便清事件）
     [SerializeField] private Button submitBtn;
 
     public MouseLook mouselook;
 
-    // 存储变量，方便外部调用
+    // 存储变量
     private int totalScore = -1;
     private string syphotom = "暂无";
 
-    public int TotalScore()
-    {   
-        return totalScore;
-    }
+    // 异步任务源：用于挂起 GameManager，直到玩家点击提交
+    private UniTaskCompletionSource<(int score, string level)> submitTcs;
 
-    public string Syphotom()
+    public int TotalScore() => totalScore;
+    public string Syphotom() => syphotom;
+
+    // 供 UIManager 调用的异步等待方法
+    public UniTask<(int score, string level)> WaitForSubmitAsync()
     {
-        return syphotom;
+        submitTcs = new UniTaskCompletionSource<(int, string)>();
+        return submitTcs.Task;
     }
 
     // 提交按钮被点击时调用
@@ -58,21 +59,20 @@ public class SubmitScript : MonoBehaviour
         // 简版解读
         string level = total switch
         {
-            <= 8 => "不错",
-            <= 16 => "一般，可关注",
-            <= 24 => "较严重，建议寻求专业支持",
-            _ => "很严重，强烈建议联系心理专业人士"
+            <= 8 => "良好",
+            <= 16 => "一般",
+            <= 24 => "较严重",
+            _ => "很严重"
         };
         syphotom = level;
 
-        // 关闭量表 + 清事件 + 回到对话
+        // 清事件
         if (submitBtn != null) submitBtn.onClick.RemoveAllListeners();
-        // when done with UI
-        StartCoroutine(chatMgr.ShowScaleResult(total, level));
-        scalePanel.SetActive(false);
+        
+        // （原有的 UI 关闭和鼠标隐藏逻辑，现在交由 UIManager 统一接管，这里不再写死）
+        if (mouselook != null) mouselook.uiActive = false;
 
-        Cursor.lockState = CursorLockMode.Locked;
-        Cursor.visible = false;
-        mouselook.uiActive = false;
+        // 核心：通知等待中的代码（GameManager），玩家提交了！把结果传过去
+        submitTcs?.TrySetResult((totalScore, level));
     }
 }

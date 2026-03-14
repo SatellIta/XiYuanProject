@@ -10,7 +10,7 @@ public class TherapyUIManager : MonoBehaviour
 {   
     private static TherapyUIManager Instance;
 
-    // ★ 全局静态开关：供角色控制脚本读取
+    // 全局静态开关：供角色控制脚本读取
     public static bool IsGamePaused { get; private set; } = false;
     public static bool IsInLevel { get; private set;} = false;
     // 动态计算是否有面板处于激活状态
@@ -20,13 +20,17 @@ public class TherapyUIManager : MonoBehaviour
     [SerializeField] private GameObject pauseMenuPanel;
     [SerializeField] private Button resumeBtn;
     [SerializeField] private Button returnToMenuBtn;
-    [SerializeField] private Button quitWithoutSaveBtn; // ★ 新增：不保存直接退出     
+    [SerializeField] private Button quitWithoutSaveBtn; // 新增：不保存直接退出     
 
     [Header("对话记录")]
     [SerializeField] private GameObject historyPanel;   // 对话历史面板
     [SerializeField] private ScrollRect scrollRect;      // 之前的 ChatScrollView, 现在是历史菜单的子组件
     [SerializeField] private Transform chatContentParent; 
 
+    [Header("心理量表")]
+    [SerializeField] private GameObject scalePanel;
+    [SerializeField] private Button submitScaleBtn;
+    [SerializeField] private SubmitScript scaleSubmit;     // 拖 SubmitScript 脚本，负责处理量表提交逻辑
     
     [Header("输入区")]
     [SerializeField] private GameObject inputPanel;      // 输入区的父物体容器
@@ -172,7 +176,6 @@ public class TherapyUIManager : MonoBehaviour
     }
 
     // 打字效果
-
     private void HideTyping()
     {
         if (currentTypingIndicator != null)
@@ -207,6 +210,7 @@ public class TherapyUIManager : MonoBehaviour
         ToggleHistory(false);
         ToggleInput(false);
         TogglePauseMenu(false);
+        ToggleScalePanel(false);
         HideNotification();
         if (subtitlePanel) subtitlePanel.SetActive(false);
 
@@ -374,7 +378,8 @@ public class TherapyUIManager : MonoBehaviour
         return (problemPanel != null && problemPanel.activeSelf) ||
                (solutionPanel != null && solutionPanel.activeSelf) ||
                (levelRecommendPanel != null && levelRecommendPanel.activeSelf) ||
-               (levelSelectionPanel != null && levelSelectionPanel.activeSelf);
+               (levelSelectionPanel != null && levelSelectionPanel.activeSelf) ||
+               (scalePanel != null && scalePanel.activeSelf);
     }
 
     // 辅助方法，统一的状态更新与鼠标状态更新
@@ -394,6 +399,22 @@ public class TherapyUIManager : MonoBehaviour
     }
 
     // 各种菜单控制
+    // 关闭所有菜单
+    public void CloseAllMenus()
+    {
+        TogglePauseMenu(false);
+        ToggleHistory(false);
+        ToggleInput(false);
+        ToggleScalePanel(false);
+        HideNotification();
+        if (subtitlePanel) subtitlePanel.SetActive(false);
+        if (problemPanel) problemPanel.SetActive(false);
+        if (solutionPanel) solutionPanel.SetActive(false);
+        if (levelRecommendPanel) levelRecommendPanel.SetActive(false);
+        if (levelSelectionPanel) levelSelectionPanel.SetActive(false);
+        UpdateStateAndCursor();
+    }
+
     // 暂停菜单
     public void TogglePauseMenu(bool show)
     {
@@ -710,4 +731,36 @@ public class TherapyUIManager : MonoBehaviour
         notificationCoroutine = null;
     }
 
+    // 心理量表系统
+    // 开关量表面板
+    public void ToggleScalePanel(bool show)
+    {
+        if (scalePanel != null)
+        {
+            scalePanel.SetActive(show);
+            if (show) scalePanel.transform.SetAsLastSibling();
+        }
+        UpdateStateAndCursor();
+    } 
+    // 开始量表流程，以及显示之后的结果
+    public async UniTask<(int score, string level)> ShowAndAwaitScaleAsync()
+    {
+        ToggleScalePanel(true);
+        Canvas.ForceUpdateCanvases();
+        var scrollRectComponent = scrollRect.GetComponent<ScrollRect>();
+        if (scrollRectComponent != null)
+        {
+            scrollRectComponent.verticalNormalizedPosition = 1f;
+        }
+        // 绑定提交按钮
+        submitScaleBtn.onClick.RemoveAllListeners();
+        submitScaleBtn.onClick.AddListener(() => {
+            scaleSubmit.OnSubmitScale();
+        });
+
+        var result = await scaleSubmit.WaitForSubmitAsync();
+        ToggleScalePanel(false);
+        return result;
+    }
+    
 }

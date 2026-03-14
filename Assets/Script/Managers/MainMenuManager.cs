@@ -44,6 +44,8 @@ public class MainMenuController : MonoBehaviour
         if(settingsPanelCloseBtn) settingsPanelCloseBtn.onClick.AddListener(OnClickCloseSettings);
 
         // --- 2. 初始化状态 ---
+        Cursor.visible = true;
+        Cursor.lockState = CursorLockMode.None;
         ShowPanel(mainPanel);
     }
 
