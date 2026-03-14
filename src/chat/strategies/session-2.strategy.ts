@@ -14,12 +14,23 @@ export class Session2Strategy implements ISessionStrategy {
     private historyService: HistoryService,
   ) {}
 
+  // 注意这里获取的提示词会在startSession中被替换掉{problem}
+  // 之后在handleMessage中就不需要每次获取了，直接使用this.systemPrompt即可
+  systemPrompt = get('system_prompt.session_2');
+  prefix = get('system_prompt.prompt_prefix');
+  finalSystemPrompt;
+
   // 开启新疗程时，由AI发送第一条消息
   async startSession(saveData: SaveData): Promise<string> {
-    let systemPrompt = get('system_prompt.session_2');
-    systemPrompt = systemPrompt.replace('{problem}', saveData.problem || '未定义');
+
+    if (this.finalSystemPrompt == null) {
+      this.finalSystemPrompt = this.systemPrompt.replace('{problem}', saveData.problem || '未定义');
+      this.finalSystemPrompt = this.prefix + this.finalSystemPrompt;
+    }
     
-    const messages: Chat[] = [{ role: 'system', content: systemPrompt }];
+    console.log('Session 2 final system prompt:', this.finalSystemPrompt);
+    
+    const messages: Chat[] = [{ role: 'system', content: this.finalSystemPrompt }];
     const response = await sendMessage(messages);
 
     // 保存初始的系统消息和AI回复到历史记录
@@ -30,13 +41,13 @@ export class Session2Strategy implements ISessionStrategy {
 
   async handleMessage(history: Chat[], userMessage: string, saveData: SaveData): Promise<string> {
     // 获取并格式化 session_2 的基础提示词
-    let systemPrompt = get('system_prompt.session_2');
-    if (saveData.problem) {
-      systemPrompt = systemPrompt.replace('{problem}', saveData.problem);
+    if (this.finalSystemPrompt == null) {
+      this.finalSystemPrompt = this.systemPrompt.replace('{problem}', saveData.problem || '未定义');
+      this.finalSystemPrompt = this.prefix + this.finalSystemPrompt;
     }
 
     // 构建发送给 AI 的消息
-    const systemMsg: Chat = { role: 'system', content: systemPrompt };
+    const systemMsg: Chat = { role: 'system', content: this.finalSystemPrompt };
     const userMsg: Chat = { role: 'user', content: userMessage };
     
     const messages = [systemMsg, ...history.slice(1), userMsg];
@@ -47,7 +58,7 @@ export class Session2Strategy implements ISessionStrategy {
     // 更新完整的对话历史
     await this.historyService.appendChatHistories(saveData.chatId, userMsg, response);
 
-    // 5. 直接返回 AI 的 JSON 字符串
+    // 直接返回 AI 的 JSON 字符串
     return response.content;
   }
 

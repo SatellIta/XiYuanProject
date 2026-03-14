@@ -15,10 +15,13 @@ export class Session1Strategy implements ISessionStrategy {
     private historyService: HistoryService,
   ) {}
 
+  systemPrompt = get('system_prompt.session_1');
+  prefix = get('system_prompt.prompt_prefix');
+  finalSystemPrompt = this.prefix + this.systemPrompt;
+
   // 开启新疗程时，由AI发送第一条消息
   async startSession(saveData: SaveData): Promise<string> {
-    const systemPrompt = get('system_prompt.session_1');
-    const messages: Chat[] = [{ role: 'system', content: systemPrompt }];
+    const messages: Chat[] = [{ role: 'system', content: this.finalSystemPrompt }];
     
     const response = await sendMessage(messages);
     
@@ -30,7 +33,7 @@ export class Session1Strategy implements ISessionStrategy {
 
   async handleMessage(history: Chat[], userMessage: string, saveData: SaveData): Promise<string> {
     const userMsg: Chat = { role: 'user', content: userMessage };
-    const messages = [...history, userMsg];
+    const messages = [{ role: 'system', content: this.finalSystemPrompt }, ...history, userMsg];
     
     const response = await sendMessage(messages);
     

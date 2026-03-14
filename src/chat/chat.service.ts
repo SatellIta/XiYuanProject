@@ -22,6 +22,7 @@ export class ChatService {
 
   // 初始化一个新对话, 需要指定系统提示词, 和第一条用户发言, 返回第一条回复
   async newChat(chatId: string, systemPromt: string, userMsg: string): Promise<string> {
+    console.log(`开始初始化对话: ${chatId}`);
     const messages: Chat[] = [];
     // 构建系统消息
     const systemMessage: Chat = {
@@ -38,7 +39,7 @@ export class ChatService {
     messages.push(inialResponse);
     // 保存初始的系统消息和AI回复到聊天记录中, saveChatHistory会覆写原有的聊天记录
     await this.historyService.saveChatHistory(chatId, messages);
-
+    console.log(`对话${chatId}初始化完成, AI回复: ${inialResponse.content}`);
     return removeRole(inialResponse);
   }
 
@@ -63,6 +64,8 @@ export class ChatService {
     const saveData = await this.saveService.load(chatId);
     if (!saveData) return '存档不存在。';
 
+    console.log(`继续对话${chatId}，用户消息: ${userMessage}`);
+
     const history = await this.historyService.getChatHistory(chatId);
     const sessionNumber = saveData.completedTherapySession + 1;
     const strategy = this.strategyFactory.getStrategy(sessionNumber);
@@ -77,6 +80,8 @@ export class ChatService {
     // const timeEnd = Date.now();
     // console.log(`疗程${sessionNumber}消息处理时间: ${timeEnd - timeStart} ms`);
 
+    console.log(`收到AI回复: ${responseContent}`);
+
     return responseContent;
   }
 
@@ -87,7 +92,7 @@ export class ChatService {
 
     const sessionNumber = saveData.completedTherapySession + 1;
     const strategy = this.strategyFactory.getStrategy(sessionNumber);
-
+    console.log(`${chatId}对话已完成疗程${sessionNumber}，正在处理阶段确认...`);
     if (strategy && strategy.processStageTransition) {
       return strategy.processStageTransition(payload, saveData);
     }

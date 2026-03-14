@@ -12,6 +12,11 @@ import { forEach, List } from 'lodash';
 export class Session3Strategy implements ISessionStrategy {
   constructor(private historyService: HistoryService) {}
 
+  originalSystemPrompt = get('system_prompt.session_3');
+  returningSystemPrompt = get('system_prompt.session_3_returning');
+  prefix = get('system_prompt.prompt_prefix');
+  finalSystemPrompt; // 在第一次调用时根据用户状态初始化提示词
+
   // 开启新疗程时，由AI发送第一条消息
   async startSession(saveData: SaveData): Promise<string> {
     // 对于第三疗程，开始逻辑与用户发送第一条消息类似，
@@ -31,25 +36,22 @@ export class Session3Strategy implements ISessionStrategy {
     const isReturning = isReturningAfterBreak && isFirstMessageInSession;
 
     // 根据状态选择提示词的键
-    const promptKey = (isReturningAfterBreak && isFirstMessageInSession)
-      ? 'system_prompt.session_3_returning'
-      : 'system_prompt.session_3';
+    if (this.finalSystemPrompt == null) {  // 在第一次调用时初始化提示词
+      let systemPrompt = isReturning ? this.returningSystemPrompt : this.originalSystemPrompt;
+      const levels: string[] = get('levels', []); // 从配置中读取关卡列表
+      const levelDescriptions: string[] = get('level_descriptions', []); // 读取关卡描述
+      let levelsString: string[] = levels.map((level, index) => {
+        const description = levelDescriptions[index] ?? "";
+        return `${level}，关卡描述${description}；`;
+      });
 
-    // 获取并格式化提示词
-    let systemPrompt = get(promptKey);
-    const levels: string[] = get('levels', []); // 从配置中读取关卡列表
-    const levelDescriptions: string[] = get('level_descriptions', []); // 读取关卡描述
-    let levelsString: string[] = levels.map((level, index) => {
-      const description = levelDescriptions[index] ?? "";
-      return `${level}，关卡描述${description}；`;
-    });
-  
-    systemPrompt = systemPrompt.replace('{problem}', saveData.problem || '未定义');
-    systemPrompt = systemPrompt.replace('{solution}', saveData.solution || '未定义');
-    systemPrompt = systemPrompt.replace('{levels}', levelsString); // 注入关卡列表
+      this.finalSystemPrompt = systemPrompt.replace('{problem}', saveData.problem || '未定义')
+        .replace('{solution}', saveData.solution || '未定义')
+        .replace('{levels}', levelsString.join('\n'));
+    }
 
     // 构建消息并与 AI 交互
-    const systemMsg: Chat = { role: 'system', content: systemPrompt };
+    const systemMsg: Chat = { role: 'system', content: this.finalSystemPrompt };
     const userMsg: Chat = { role: 'user', content: userMessage };
     
     const messages = [systemMsg, ...history.slice(1), userMsg];
