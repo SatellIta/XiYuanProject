@@ -335,8 +335,9 @@ public class TherapyUIManager : MonoBehaviour
         // 5. 强制刷新布局 (LayoutRebuilder)
         if(chatContentParent != null)
             LayoutRebuilder.ForceRebuildLayoutImmediate(chatContentParent.GetComponent<RectTransform>());
-            
-        ScrollToBottom();
+
+        // 这里不需要 
+        // ScrollToBottom();
     }
 
     private void ScrollToBottom()
@@ -460,14 +461,14 @@ public class TherapyUIManager : MonoBehaviour
     // 作用：只显示传入的 targetPanel，隐藏其他所有已知面板
     private void SwitchToPanel(GameObject targetPanel)
     {
-        // 1. 先关掉所有
+        // 先关掉所有
         if (problemPanel) problemPanel.SetActive(false);
         if (solutionPanel) solutionPanel.SetActive(false);
         if (subtitlePanel) subtitlePanel.SetActive(false);
         if (levelRecommendPanel) levelRecommendPanel.SetActive(false);
         if (levelSelectionPanel) levelSelectionPanel.SetActive(false);
 
-        // 2. 再打开目标
+        // 再打开目标
         if (targetPanel) 
         {   
             targetPanel.SetActive(true);

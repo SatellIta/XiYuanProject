@@ -546,6 +546,7 @@ public class TherapyGameManager : MonoBehaviour
     private async Task<bool> RunLevel(TherapyLevelID levelId)
     {
         levelManager.showGuideTowardsLevel(levelId);
+        ui.ShowNotification("请跟随地上的指引箭头前进", 3f);
         return true;
     }
 

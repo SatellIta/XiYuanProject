@@ -4,8 +4,6 @@ using UnityEngine;
 
 public class NotificationTrigger : MonoBehaviour
 {
-    public TherapyUIManager ui;
-
     [Header("提示文本")]
     [TextArea(2, 4)]
     [SerializeField] string warningText = "这是一个提示文本触发器，进入后会显示这段文本。";
@@ -22,7 +20,7 @@ public class NotificationTrigger : MonoBehaviour
     {
         if (other.CompareTag("Player") && (!triggerOnce || !hasTriggered))
         {
-            ui.ShowNotification(warningText, warningDuration);
+            TherapyUIManager.Instance.ShowNotification(warningText, warningDuration);
             hasTriggered = true;
         }
     }

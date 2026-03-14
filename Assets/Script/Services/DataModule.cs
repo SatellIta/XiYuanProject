@@ -98,9 +98,16 @@ public class AIResponse
     // 如果后续有更多字段，在这里添加...
 
     // 辅助属性：用于快速判断当前状态 (只读)
-    [JsonIgnore] public bool IsProblemFound => !string.IsNullOrEmpty(Problem);
-    [JsonIgnore] public bool AreSolutionsReady => !string.IsNullOrEmpty(Solution1) && !string.IsNullOrEmpty(Solution2);
-    [JsonIgnore] public bool IsLevelRecommended => !string.IsNullOrEmpty(RecommendedLevel);
+    [JsonIgnore] public bool IsProblemFound => !IsNullOrEmptyOrNone(Problem);
+    [JsonIgnore] public bool AreSolutionsReady => !IsNullOrEmptyOrNone(Solution1) && !IsNullOrEmptyOrNone(Solution2);
+    [JsonIgnore] public bool IsLevelRecommended => !IsNullOrEmptyOrNone(RecommendedLevel);
+
+    private static bool IsNullOrEmptyOrNone(string str)
+    {
+        if (string.IsNullOrEmpty(str)) return true;
+        string lower = str.Trim().ToLower();
+        return lower == "null" || lower == "none" || lower == "n/a" || lower == "empty";
+    }
 }
 
 // 发送给 /chats/continue 的请求体
