@@ -15,7 +15,6 @@ export class Session3Strategy implements ISessionStrategy {
   originalSystemPrompt = get('system_prompt.session_3');
   returningSystemPrompt = get('system_prompt.session_3_returning');
   prefix = get('system_prompt.prompt_prefix');
-  finalSystemPrompt; // 在第一次调用时根据用户状态初始化提示词
 
   // 开启新疗程时，由AI发送第一条消息
   async startSession(saveData: SaveData): Promise<string> {
@@ -36,22 +35,21 @@ export class Session3Strategy implements ISessionStrategy {
     const isReturning = isReturningAfterBreak && isFirstMessageInSession;
 
     // 根据状态选择提示词的键
-    if (this.finalSystemPrompt == null) {  // 在第一次调用时初始化提示词
-      let systemPrompt = isReturning ? this.returningSystemPrompt : this.originalSystemPrompt;
-      const levels: string[] = get('levels', []); // 从配置中读取关卡列表
-      const levelDescriptions: string[] = get('level_descriptions', []); // 读取关卡描述
-      let levelsString: string[] = levels.map((level, index) => {
-        const description = levelDescriptions[index] ?? "";
-        return `${level}，关卡描述${description}；`;
-      });
+    let finalSystemPrompt;
+    let systemPrompt = isReturning ? this.returningSystemPrompt : this.originalSystemPrompt;
+    const levels: string[] = get('levels', []); // 从配置中读取关卡列表
+    const levelDescriptions: string[] = get('level_descriptions', []); // 读取关卡描述
+    let levelsString: string[] = levels.map((level, index) => {
+      const description = levelDescriptions[index] ?? "";
+      return `${level}，关卡描述${description}；`;
+    });
 
-      this.finalSystemPrompt = systemPrompt.replace('{problem}', saveData.problem || '未定义')
+    finalSystemPrompt = systemPrompt.replace('{problem}', saveData.problem || '未定义')
         .replace('{solution}', saveData.solution || '未定义')
         .replace('{levels}', levelsString.join('\n'));
-    }
 
     // 构建消息并与 AI 交互
-    const systemMsg: Chat = { role: 'system', content: this.finalSystemPrompt };
+    const systemMsg: Chat = { role: 'system', content: finalSystemPrompt };
     const userMsg: Chat = { role: 'user', content: userMessage };
     
     const messages = [systemMsg, ...history.slice(1), userMsg];

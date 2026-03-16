@@ -18,19 +18,17 @@ export class Session2Strategy implements ISessionStrategy {
   // 之后在handleMessage中就不需要每次获取了，直接使用this.systemPrompt即可
   systemPrompt = get('system_prompt.session_2');
   prefix = get('system_prompt.prompt_prefix');
-  finalSystemPrompt;
 
   // 开启新疗程时，由AI发送第一条消息
   async startSession(saveData: SaveData): Promise<string> {
 
-    if (this.finalSystemPrompt == null) {
-      this.finalSystemPrompt = this.systemPrompt.replace('{problem}', saveData.problem || '未定义');
-      this.finalSystemPrompt = this.prefix + this.finalSystemPrompt;
-    }
+    let finalSystemPrompt = this.systemPrompt.replace('{problem}', saveData.problem || '未定义');
+    finalSystemPrompt = this.prefix + finalSystemPrompt;
+
     
-    console.log('Session 2 final system prompt:', this.finalSystemPrompt);
+    console.log('Session 2 final system prompt:', finalSystemPrompt);
     
-    const messages: Chat[] = [{ role: 'system', content: this.finalSystemPrompt }];
+    const messages: Chat[] = [{ role: 'system', content: finalSystemPrompt }];
     const response = await sendMessage(messages);
 
     // 保存初始的系统消息和AI回复到历史记录
@@ -41,13 +39,13 @@ export class Session2Strategy implements ISessionStrategy {
 
   async handleMessage(history: Chat[], userMessage: string, saveData: SaveData): Promise<string> {
     // 获取并格式化 session_2 的基础提示词
-    if (this.finalSystemPrompt == null) {
-      this.finalSystemPrompt = this.systemPrompt.replace('{problem}', saveData.problem || '未定义');
-      this.finalSystemPrompt = this.prefix + this.finalSystemPrompt;
-    }
+    let finalSystemPrompt = this.systemPrompt.replace('{problem}', saveData.problem || '未定义');
+    finalSystemPrompt = this.prefix + finalSystemPrompt;
+
+    console.log('Session 2 final system prompt for handleMessage:', finalSystemPrompt);
 
     // 构建发送给 AI 的消息
-    const systemMsg: Chat = { role: 'system', content: this.finalSystemPrompt };
+    const systemMsg: Chat = { role: 'system', content: finalSystemPrompt };
     const userMsg: Chat = { role: 'user', content: userMessage };
     
     const messages = [systemMsg, ...history.slice(1), userMsg];
