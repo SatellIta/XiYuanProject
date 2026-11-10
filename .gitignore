@@ -49,6 +49,9 @@ test.*.ts
 .env.production.local
 .env.local
 
+# local runtime config (contains API keys)
+/config/config.json
+
 # temp directory
 .temp
 .tmp
